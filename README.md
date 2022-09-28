@@ -15,3 +15,5 @@ ys=xs**2
 # and additional keyword args are accepted, e.g. "title" which is passed through to matplotlib's ax.set_title and so on
 plot([xs,xs],[ys,ys/2],markers=['k.','#882e2e,^'],title="black line, reddish triangles",labels=["x^2","1/2*x^2"])
 ```
+
+markers can be single-character color and form codes ("k-" = "black line", "b." = "blue dots" and so on), or comma-separated ("blue,:" = "blue dotted", "#9a1ee0" = "purple, default markers")
