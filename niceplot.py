@@ -17,6 +17,8 @@ params={ 'xtick':{'direction':'in', 'top':True , 'bottom':True , 'major.pad':7 }
 	'axes':{'autolimit_mode':'round_numbers',"prop_cycle":cycle}, # (rule #6)
 	#'svg':{'fonttype':'none'}, # ensure fonts in exported svgs are text objects wen you open them with inkscape: https://stackoverflow.com/questions/34387893/output-matplotlib-figure-to-svg-with-text-as-text-not-curves
 	'figure':{'figsize':(8,6),'dpi':192},
+	'legend':{'edgecolor':'black','fancybox':False}
+	
 	}
 for key in params:
 	matplotlib.rc(key, **params[key])
@@ -72,7 +74,7 @@ standardOptions={ "markers" : list(matplotlib.markers.MarkerStyle.markers.keys()
 #  marker or linestyle args), and fill_between (you can plot shaded error bands
 #  by passing a pair of datasets, y+ye and y-ye, and filling between them). 
 def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', **kwargs):
-	global axs ; axs=[]
+	global axs,frames ; axs=[] ; frames=[]
 	# CREATE THE PLOT OBJECTS
 	if len(multiplot)>0:
 		axs=genMultiAx(**multiplot)
@@ -111,8 +113,8 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', **kwa
 			ax.plot(xs[i], ys[i], **kw)
 	for ax in axs:
 		if len(labels)==0 or max( [ len(lb) for lb in labels ] ) > 1:
-			ax.legend()
-			ax.legend_background()
+			l=ax.legend()
+			frames.append( l.get_frame() )
 	#plt.legend()
 
 	# HANDLE OTHER ARGUMENTS. Each allowable is mapped to a function, and a default
@@ -129,7 +131,8 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', **kwa
 			"ylim"  : (axs[0].set_ylim  , None    , None       ) , 
 			"xscale": (axs[0].set_xscale, "linear", None       ) , 
 			"yscale": (axs[0].set_yscale, "linear", None       ) ,
-			"facecolor": (axs[0].set_facecolor,"white",None    ) }
+			"facecolor": (setFace,"white",None    ) }
+	
 	for k in funcLookup.keys():		# for every allowed funct/arg
 		#print(k)
 		f,d,f2=funcLookup[k]
@@ -167,7 +170,6 @@ def handleMarkers(m):
 		else:							# NEITHER, let mpl default in markers, suppress line
 			kw["linestyle"]=''
 
-		
 		if c in standardOptions["colors"] or c[0]=="#":			# STANDARD COLOR CODE
 			kw["color"]=c
 		else:
@@ -208,3 +210,12 @@ def processText(text): # automagically recognize things like "W m^-2 K^-1" and t
 			b2="".join( [c for c in b if c not in "-0123456789." ] ) # ")" should not be superscripted
 			terms[i]=a+"$^{"+b1+"}$"+b2				# reassembled: "K$^{-1}$)"
 	return " ".join(terms)
+
+def setFace(fc): # https://stackoverflow.com/questions/19863368/how-to-change-the-legend-edgecolor-and-facecolor-in-matplotlib
+	for ax,fr in zip(axs,frames):
+		ax.set_facecolor(fc)
+		fr.set_facecolor(fc)
+
+def setLegendLW(lw):
+	for fr in frames:
+		fr.set_linewidth(lw)
