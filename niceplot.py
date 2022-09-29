@@ -112,6 +112,7 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', **kwa
 	for ax in axs:
 		if len(labels)==0 or max( [ len(lb) for lb in labels ] ) > 1:
 			ax.legend()
+			ax.legend_background()
 	#plt.legend()
 
 	# HANDLE OTHER ARGUMENTS. Each allowable is mapped to a function, and a default
