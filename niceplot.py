@@ -17,7 +17,7 @@ params={ 'xtick':{'direction':'in', 'top':True , 'bottom':True , 'major.pad':7 }
 	'axes':{'autolimit_mode':'round_numbers',"prop_cycle":cycle}, # (rule #6)
 	#'svg':{'fonttype':'none'}, # ensure fonts in exported svgs are text objects wen you open them with inkscape: https://stackoverflow.com/questions/34387893/output-matplotlib-figure-to-svg-with-text-as-text-not-curves
 	'figure':{'figsize':(8,6),'dpi':192},
-	'legend':{'edgecolor':'black','fancybox':False}
+	'legend':{'edgecolor':'black','fancybox':False}			# fancybox=false removes corner curvature
 	
 	}
 for key in params:
