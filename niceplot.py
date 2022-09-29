@@ -131,7 +131,7 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', **kwa
 			"ylim"  : (axs[0].set_ylim  , None    , None       ) , 
 			"xscale": (axs[0].set_xscale, "linear", None       ) , 
 			"yscale": (axs[0].set_yscale, "linear", None       ) ,
-			"facecolor": (setFace       ,"white"  , None        ) }
+			"facecolor": (setFace       , "white" , None       ) }
 	
 	for k in funcLookup.keys():		# for every allowed funct/arg
 		#print(k)
