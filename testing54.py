@@ -4,7 +4,7 @@ from niceplot import *
 xs=np.linspace(0,10,20)
 ys=xs**2
 
-plot([xs,xs],[ys,ys/2],markers=['#882e2e,^'],title="red, defaulted",labels=["x^2","1/2*x^2"])
+plot([xs,xs],[ys,ys/2],markers=['#882e2e,^'],title="red, defaulted",labels=["x^2","1/2*x^2"],figsize=(10,2))
 #plot([xs,xs],[ys,ys/2],markers=['r'],title="red, defaulted",labels=["wow","oh no"])
 #plot([xs],[ys],markers=['ko'],title="black o")
 #plot([xs,xs],[ys,ys/2],markers=['k-','b.'],title="black line, blue dots")

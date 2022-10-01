@@ -74,10 +74,10 @@ standardOptions={ "markers" : list(matplotlib.markers.MarkerStyle.markers.keys()
 #  marker or linestyle args), and fill_between (you can plot shaded error bands
 #  by passing a pair of datasets, y+ye and y-ye, and filling between them). 
 def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', **kwargs):
-	global axs,frames ; axs=[] ; frames=[]
+	global axs,frames,fig ; axs=[] ; frames=[]
 	# CREATE THE PLOT OBJECTS
 	if len(multiplot)>0:
-		axs=genMultiAx(**multiplot)
+		axs,fig=genMultiAx(**multiplot)
 	else:
 		fig,ax=plt.subplots() ; axs.append(ax)
 		
@@ -131,7 +131,8 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', **kwa
 			"ylim"  : (axs[0].set_ylim  , None    , None       ) , 
 			"xscale": (axs[0].set_xscale, "linear", None       ) , 
 			"yscale": (axs[0].set_yscale, "linear", None       ) ,
-			"facecolor": (setFace       , "white" , None       ) }
+			"facecolor": (setFace       , "white" , None       ) ,
+			"figsize": (fig.set_size_inches, None , None       ) }
 	
 	for k in funcLookup.keys():		# for every allowed funct/arg
 		#print(k)
@@ -193,7 +194,7 @@ def genMultiAx(method,indices,scaling=''):
 		fig,axs=plt.subplots(nPlots,sharex=True,gridspec_kw={"hspace":0,'height_ratios':scaling})
 	if method=="shared":
 		fig,ax1=plt.subplots() ; ax2=ax1.twinx() ; axs=[ax1,ax2]
-	return axs
+	return axs,fig
 
 def float2rgb(c): # float, 0 to 1
 	#import matplotlib.cm as cm
