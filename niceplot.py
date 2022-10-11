@@ -145,6 +145,8 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', **kwa
 			f(d)			# replaces things like "ax.set_title(value)"
 
 	if len(filename)>0:
+		if ".svg" in filename:
+			matplotlib.rc("svg", **{'fonttype':'none'}) # ensures text in svg files is saved as text (for later editing)
 		plt.savefig(filename)
 	else:
 		plt.show()
