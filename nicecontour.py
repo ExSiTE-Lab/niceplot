@@ -19,7 +19,10 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",**kwargs):
 		#cbar.ax.set_yticklabels([format(v,'.'+str(nDecimals)+'f') for v in cbar.get_ticks()])
 	if heatOrContour in ["contour","both"]:
 		levels=np.linspace(LB,UB,20)
-		CS=plt.contour(xvals,yvals,zvals, colors=kwargs.get("linecolor","black"),levels=levels, linestyles=kwargs.get("linestyle","-"),linewidths=kwargs.get("linewidth",1))
+		contourKwargs={"levels":levels,"linestyles":kwargs.get("linestyle","-"),"linewidths":kwargs.get("linewidth",1)}
+		color=kwargs.get("linecolor","black") ; colorOrMap={True:"cmap",False:"color"}[ color in matplotlib.colormaps.keys() ]
+		contourKwargs[colorOrMap]=color
+		CS=plt.contour(xvals,yvals,zvals, **contourKwargs)
 		#if linelabels:
 		#	pltObj.clabel(CS, inline=1)
 	# GENERAL
