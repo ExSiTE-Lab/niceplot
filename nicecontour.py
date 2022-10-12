@@ -29,6 +29,20 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",**kwargs):
 	plt.title( kwargs.get("title","TITLE") )
 	plt.xlabel(kwargs.get("xlabel","XLABEL") )
 	plt.ylabel(kwargs.get("ylabel","YLABEL") )
+	
+	if "overplot" in kwargs.keys(): # it's possible to pass a dict of xs,ys,markers, to be plotted over top of the contour/heatmap
+		for dataset in kwargs["overplot"]:
+			xs=dataset["xs"] ; ys=dataset["ys"] ; kind=dataset["kind"] # these are the only 3 required keys! all else is kwargs
+			kw={ k:dataset[k] for k in dataset.keys() if k not in ["xs","ys","kind"] }
+			if kind=="scatter":
+				plt.scatter(xs,ys,**kw)	
+			elif kind=="line":
+				plt.plot(xs,ys,**kw)
+			elif kind=="text":		# TODO consider using annotate instead? https://stackoverflow.com/questions/14432557/scatter-plot-with-different-text-at-each-data-point this buys you arrows, and you can still do plt.annotate
+				text=kw["text"]		# text-type overplotting has one more required key: "text"
+				kw={ k:kw[k] for k in kw.keys() if k!="text" }
+				for x,y,t in zip(xs,ys,text):
+					plt.text(x,y,t,**kw)
 
 	if len(filename)>0:
 		if ".svg" in filename:
