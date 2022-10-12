@@ -96,7 +96,6 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', **kwa
 		if len(labels)>i:
 			kw["label"]=processText(labels[i])
 
-		print(kw)
 		# ADD TO PLOT
 		if len(ye)>i:							# ERRORBARS
 			ax.errorbar(xs[i], ys[i], yerr=ye, capsize=2, **kw)
@@ -118,7 +117,6 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', **kwa
 	#plt.legend()
 
 	# HANDLE OTHER ARGUMENTS. Each allowable is mapped to a function, and a default
-	print(kwargs)
 	if "xscale" not in kwargs.keys() or kwargs["xscale"]!="log":
 		xlim=list(axs[0].get_xlim()) ; xlim.append(0) ; xlim=[min(xlim),max(xlim)] ; axs[0].set_xlim(xlim)
 	if "yscale" not in kwargs.keys() or kwargs["yscale"]!="log":
@@ -135,7 +133,6 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', **kwa
 			"figsize": (fig.set_size_inches, None , None       ) }
 	
 	for k in funcLookup.keys():		# for every allowed funct/arg
-		#print(k)
 		f,d,f2=funcLookup[k]
 		if k in kwargs.keys():		# if the user passed it, override the default with that
 			d=kwargs[k]		
