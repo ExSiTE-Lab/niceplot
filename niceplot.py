@@ -121,25 +121,51 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 		xlim=list(axs[0].get_xlim()) ; xlim.append(0) ; xlim=[min(xlim),max(xlim)] ; axs[0].set_xlim(xlim)
 	if "yscale" not in kwargs.keys() or kwargs["yscale"]!="log":
 		ylim=list(axs[0].get_ylim()) ; ylim.append(0) ; ylim=[min(ylim),max(ylim)] ; axs[0].set_ylim(ylim)
+
+	axs[0].set_title( processText( kwargs.get("title","TITLE") ) ) # get "title" kw from kwargs, defaulting to "title". pass through
+	axs[0].set_xlabel( processText( kwargs.get("xlabel","XLABEL") ) ) # processText, then set as title. and so on for xlabel,ylabel
+	axs[0].set_ylabel( processText( kwargs.get("ylabel","YLABEL") ) ) 
+	axs[0].set_xlim( kwargs.get("xlim") )
+	axs[0].set_ylim( kwargs.get("ylim") )
+	axs[0].set_xscale( kwargs.get("xscale","linear") )
+	axs[0].set_yscale( kwargs.get("yscale","linear") )
+	setFace( kwargs.get("facecolor","white") )
+	if "figsize" in kwargs.keys():				# most are okay receiving None, except for set_size_inches
+		fig.set_size_inches( kwargs.get("figsize") )
+	if "fontsize" in kwargs.keys():
+		#matplotlib.rc('font', **{'size': kwargs.get("fontsize") }) # TODO if you do this via rcparams, it "permanently" sets it for all following plots! not what we want
+		#axs[0].set_font_size( kwargs.get("fontsize") )
+		#axs[0].title.set_fontsize( kwargs.get("fontsize") )
+		#matplotlib.rc('axes', **{'titlesize':kwargs.get("fontsize") })
+		for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
+			ax.get_xticklabels() + ax.get_yticklabels() + axs[0].get_legend().get_texts()):
+			#item.set_fontsize(20)
+			print(item)
+			item.set_fontsize( kwargs.get("fontsize"))
+		#for item in axs[0].get_legend().get_texts():
+		#	print(item)
+		#	item.set_fontsize( kwargs.get("fontsize"))
+
+#'font':{'family':'arial', 'weight':'regular' , 'size':16}
 	#		key	   set function   default val,  pre-function
-	funcLookup={ 	"title" : (axs[0].set_title , "TITLE" , processText) , 
-			"xlabel": (axs[0].set_xlabel, "XLABEL", processText) ,
-			"ylabel": (axs[0].set_ylabel, "YLABEL", processText) ,
-			"xlim"  : (axs[0].set_xlim  , None    , None       ) , 
-			"ylim"  : (axs[0].set_ylim  , None    , None       ) , 
-			"xscale": (axs[0].set_xscale, "linear", None       ) , 
-			"yscale": (axs[0].set_yscale, "linear", None       ) ,
-			"facecolor": (setFace       , "white" , None       ) ,
-			"figsize": (fig.set_size_inches, None , None       ) }
-	
-	for k in funcLookup.keys():		# for every allowed funct/arg
-		f,d,f2=funcLookup[k]
-		if k in kwargs.keys():		# if the user passed it, override the default with that
-			d=kwargs[k]		
-		if d is not None:		# if there's a value, set it
-			if f2 is not None:
-				d=f2(d)
-			f(d)			# replaces things like "ax.set_title(value)"
+#	funcLookup={ 	"title" : (axs[0].set_title , "TITLE" , processText) , 
+#			"xlabel": (axs[0].set_xlabel, "XLABEL", processText) ,
+#			"ylabel": (axs[0].set_ylabel, "YLABEL", processText) ,
+#			"xlim"  : (axs[0].set_xlim  , None    , None       ) , 
+#			"ylim"  : (axs[0].set_ylim  , None    , None       ) , 
+#			"xscale": (axs[0].set_xscale, "linear", None       ) , 
+#			"yscale": (axs[0].set_yscale, "linear", None       ) ,
+#			"facecolor": (setFace       , "white" , None       ) ,
+#			"figsize": (fig.set_size_inches, None , None       ) }
+#	
+#	for k in funcLookup.keys():		# for every allowed funct/arg
+#		f,d,f2=funcLookup[k]
+#		if k in kwargs.keys():		# if the user passed it, override the default with that
+#			d=kwargs[k]		
+#		if d is not None:		# if there's a value, set it
+#			if f2 is not None:
+#				d=f2(d)
+#			f(d)			# replaces things like "ax.set_title(value)"
 
 	if len(filename)>0:
 		if ".svg" in filename:
