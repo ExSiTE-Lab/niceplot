@@ -14,7 +14,7 @@ cmap=matplotlib.cm.rainbow
 params={ 'xtick':{'direction':'in', 'top':True , 'bottom':True , 'major.pad':7 }, # (rule #4)
 	'ytick':{'direction':'in', 'left':True , 'right':True , 'major.pad':7 },
 	'font':{'family':'arial', 'weight':'regular' , 'size':16}, # (rule #5)
-	'axes':{'autolimit_mode':'round_numbers',"prop_cycle":cycle}, # (rule #6)
+	'axes':{'autolimit_mode':'round_numbers',"prop_cycle":cycle, 'titlesize':16}, # (rule #6 Titile size should be the same size as the fontsize)
 	#'svg':{'fonttype':'none'}, # ensure fonts in exported svgs are text objects wen you open them with inkscape: https://stackoverflow.com/questions/34387893/output-matplotlib-figure-to-svg-with-text-as-text-not-curves
 	'figure':{'figsize':(8,6),'dpi':192},
 	'legend':{'edgecolor':'black','fancybox':False}			# fancybox=false removes corner curvature
@@ -73,7 +73,7 @@ standardOptions={ "markers" : list(matplotlib.markers.MarkerStyle.markers.keys()
 #  marker args, etc), lines (linestyle args), errorbars (ax.errorbar, with both
 #  marker or linestyle args), and fill_between (you can plot shaded error bands
 #  by passing a pair of datasets, y+ye and y-ye, and filling between them). 
-def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', **kwargs):
+def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fontsize='', **kwargs):
 	global axs,frames,fig ; axs=[] ; frames=[]
 	# CREATE THE PLOT OBJECTS
 	if len(multiplot)>0:
