@@ -132,7 +132,7 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 	setFace( kwargs.get("facecolor","white") )
 	if "figsize" in kwargs.keys():				# most are okay receiving None, except for set_size_inches
 		fig.set_size_inches( kwargs.get("figsize") )
-	if "fontsize" in kwargs.keys():
+	if "fontsize" in kwargs.keys(): # https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot
 		#matplotlib.rc('font', **{'size': kwargs.get("fontsize") }) # TODO if you do this via rcparams, it "permanently" sets it for all following plots! not what we want
 		#axs[0].set_font_size( kwargs.get("fontsize") )
 		#axs[0].title.set_fontsize( kwargs.get("fontsize") )
