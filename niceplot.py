@@ -125,8 +125,10 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 	axs[0].set_title( processText( kwargs.get("title","TITLE") ) ) # get "title" kw from kwargs, defaulting to "title". pass through
 	axs[0].set_xlabel( processText( kwargs.get("xlabel","XLABEL") ) ) # processText, then set as title. and so on for xlabel,ylabel
 	axs[0].set_ylabel( processText( kwargs.get("ylabel","YLABEL") ) ) 
-	axs[0].set_xlim( kwargs.get("xlim") )
-	axs[0].set_ylim( kwargs.get("ylim") )
+	if "xlim" in kwargs.keys():
+		axs[0].set_xlim( kwargs.get("xlim") )
+	if "ylim" in kwargs.keys():
+		axs[0].set_ylim( kwargs.get("ylim") )
 	axs[0].set_xscale( kwargs.get("xscale","linear") )
 	axs[0].set_yscale( kwargs.get("yscale","linear") )
 	setFace( kwargs.get("facecolor","white") )
