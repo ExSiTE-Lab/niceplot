@@ -18,7 +18,8 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",**kwargs):
 		CS=plt.contourf(xvals,yvals,zvals,levels=np.linspace(LB,UB,500),cmap=kwargs.get("cmap",defaultcmap))
 		cbar=plt.colorbar()
 		for c in CS.collections:
-			c.set_rasterized(True)
+			c.set_edgecolor("face")
+		#	c.set_rasterized(True)
 		#nDecimals=int(scientificNotation(UB-LB).split("e")[1])*-1+1
 		#nDecimals=max(nDecimals,0) # https://stackoverflow.com/questions/19986662/rounding-a-number-in-python-but-keeping-ending-zeros
 		#cbar.ax.set_yticklabels([format(v,'.'+str(nDecimals)+'f') for v in cbar.get_ticks()])

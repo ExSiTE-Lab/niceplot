@@ -19,6 +19,6 @@ texts=[ str(np.round(x,1))+","+str(np.round(y,1)) for x,y in zip(scatx,scaty) ]
 #contour(zs,xs,ys,heatOrContour="contour",linestyle=ls,linecolor="viridis", overplot=[{"xs":scatx,"ys":scaty,"kind":"scatter","marker":mkr,"c":"red"},{"xs":scatx+2,"ys":scaty+2,"kind":"text","text":texts,"fontsize":20}])
 
 contour(zs,xs,ys,heatOrContour="both",filename="out1.svg")
-contour(zs,xs,ys,heatOrContour="both",filename="out2.svg",zlim=[np.mean(zs)-np.std(zs),np.mean(zs)+np.std(zs)])
-contour(zs,xs,ys,heatOrContour="both",filename="out3.svg",zlim=[np.mean(zs)-np.std(zs),None])
-contour(zs,xs,ys,heatOrContour="both",filename="out4.svg",zlim=[0,None])
+#contour(zs,xs,ys,heatOrContour="both",filename="out2.svg",zlim=[np.mean(zs)-np.std(zs),np.mean(zs)+np.std(zs)])
+#contour(zs,xs,ys,heatOrContour="both",filename="out3.svg",zlim=[np.mean(zs)-np.std(zs),None])
+#contour(zs,xs,ys,heatOrContour="both",filename="out4.svg",zlim=[0,None])
