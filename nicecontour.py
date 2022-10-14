@@ -1,5 +1,6 @@
 import matplotlib,os
 import matplotlib.pyplot as plt #https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.html
+import matplotlib.tri as tri
 import numpy as np
 
 defaultcmap=matplotlib.cm.inferno
@@ -10,10 +11,24 @@ for key in params:
 	matplotlib.rc(key, **params[key])
 
 def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",**kwargs):
-	plt.clf()
+	plt.clf() # need this or you get duplicate cbars if you generate multiple plots! 
+
 	LB,UB=np.amin(zvals),np.amax(zvals)
 	if "zlim" in kwargs.keys():
-		zlim=kwargs["zlim"] ; LB={True:LB,False:zlim[0]}[zlim[0] is None] ; UB={True:UB,False:zlim[1]}[zlim[1] is None] 
+		zlim=kwargs["zlim"] ; LB={True:LB,False:zlim[0]}[zlim[0] is None] ; UB={True:UB,False:zlim[1]}[zlim[1] is None]
+
+	# for heatmaps, you can use tricontourf, but that won't work for contours. need to follow https://matplotlib.org/stable/gallery/images_contours_and_fields/irregulardatagrid.html
+	if len(np.shape(zvals))!=2:
+		# Create grid values first.
+		xi = np.linspace(min(xvals), max(xvals), 1000)
+		yi = np.linspace(min(yvals), max(yvals), 1000)
+		# Linearly interpolate the data (x, y) on a grid defined by (xi, yi).
+		triang = tri.Triangulation(xvals, yvals)
+		interpolator = tri.LinearTriInterpolator(triang, zvals)
+		Xi, Yi = np.meshgrid(xi, yi)
+		zi = interpolator(Xi, Yi)
+		xvals=Xi ; yvals=Yi ; zvals=zi
+
 	if heatOrContour in ["heat","both"]:
 		CS=plt.contourf(xvals,yvals,zvals,levels=np.linspace(LB,UB,500),cmap=kwargs.get("cmap",defaultcmap))
 		cbar=plt.colorbar()
@@ -26,7 +41,7 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",**kwargs):
 	if heatOrContour in ["contour","both"]:
 		levels=np.linspace(LB,UB,20)
 		contourKwargs={"levels":levels,"linestyles":kwargs.get("linestyle","-"),"linewidths":kwargs.get("linewidth",1)}
-		color=kwargs.get("linecolor","black") ; colorOrMap={True:"cmap",False:"color"}[ color in matplotlib.colormaps.keys() ]
+		color=kwargs.get("linecolor","black") ; colorOrMap={True:"cmap",False:"colors"}[ color in matplotlib.colormaps.keys() ]
 		contourKwargs[colorOrMap]=color
 		CS=plt.contour(xvals,yvals,zvals, **contourKwargs)
 		#if linelabels:
