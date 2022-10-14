@@ -10,10 +10,15 @@ for key in params:
 	matplotlib.rc(key, **params[key])
 
 def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",**kwargs):
+	plt.clf()
 	LB,UB=np.amin(zvals),np.amax(zvals)
+	if "zlim" in kwargs.keys():
+		zlim=kwargs["zlim"] ; LB={True:LB,False:zlim[0]}[zlim[0] is None] ; UB={True:UB,False:zlim[1]}[zlim[1] is None] 
 	if heatOrContour in ["heat","both"]:
-		plt.contourf(xvals,yvals,zvals,levels=np.linspace(LB,UB,500),cmap=kwargs.get("cmap",defaultcmap))
+		CS=plt.contourf(xvals,yvals,zvals,levels=np.linspace(LB,UB,500),cmap=kwargs.get("cmap",defaultcmap))
 		cbar=plt.colorbar()
+		for c in CS.collections:
+			c.set_rasterized(True)
 		#nDecimals=int(scientificNotation(UB-LB).split("e")[1])*-1+1
 		#nDecimals=max(nDecimals,0) # https://stackoverflow.com/questions/19986662/rounding-a-number-in-python-but-keeping-ending-zeros
 		#cbar.ax.set_yticklabels([format(v,'.'+str(nDecimals)+'f') for v in cbar.get_ticks()])
