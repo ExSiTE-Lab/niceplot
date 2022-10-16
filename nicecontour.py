@@ -31,7 +31,7 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",**kwargs):
 
 	if heatOrContour in ["heat","both"]:
 		CS=plt.contourf(xvals,yvals,zvals,levels=np.linspace(LB,UB,500),cmap=kwargs.get("cmap",defaultcmap))
-		cbar=plt.colorbar()
+		#cbar=plt.colorbar()
 		for c in CS.collections:
 			c.set_edgecolor("face")
 		#	c.set_rasterized(True)
@@ -50,6 +50,7 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",**kwargs):
 	plt.title( kwargs.get("title","TITLE") )
 	plt.xlabel(kwargs.get("xlabel","XLABEL") )
 	plt.ylabel(kwargs.get("ylabel","YLABEL") )
+	plt.colorbar().ax.set_title(kwargs.get("zlabel","ZTITLE"))
 	
 	if "overplot" in kwargs.keys(): # it's possible to pass a dict of xs,ys,markers, to be plotted over top of the contour/heatmap
 		for dataset in kwargs["overplot"]:
