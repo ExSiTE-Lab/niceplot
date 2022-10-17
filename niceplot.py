@@ -7,6 +7,8 @@ from cycler import cycler
 # WHAT DEFAULT COLORS AND SYMBOLS DO YOU WANT TO ROTATE THROUGH? WHAT COLORMAP DO YOU WANT INTEGER COLOR VALUES TO REFER TO?
 defCols=['k', 'g', 'b', 'r']
 defMark=['o','^','s','P','d','X','v','+','x']
+defaultMarkerSize = 10
+defaultLineWidth = 2
 cycle=cycler(color=defCols*len(defMark))+cycler(marker=defMark*len(defCols)) # https://github.com/matplotlib/cycler/issues/41
 #cmap=matplotlib.cm.inferno
 cmap=matplotlib.cm.rainbow
@@ -74,7 +76,9 @@ standardOptions={ "markers" : list(matplotlib.markers.MarkerStyle.markers.keys()
 #  marker or linestyle args), and fill_between (you can plot shaded error bands
 #  by passing a pair of datasets, y+ye and y-ye, and filling between them). 
 def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fontsize='', **kwargs):
-	global axs,frames,fig ; axs=[] ; frames=[]
+	global axs,frames,fig,defaultMarkerSize,defaultLineWidth ; axs=[] ; frames=[]
+	defaultLineWidth = kwargs.get("lw", defaultLineWidth); defaultMarkerSize = kwargs.get("ms", defaultMarkerSize);
+	
 	# CREATE THE PLOT OBJECTS
 	if len(multiplot)>0:
 		axs,fig=genMultiAx(**multiplot)
@@ -192,9 +196,9 @@ def handleMarkers(m):
 			kw["linewidth"]=0
 			kw["alpha"]=.2
 		elif f in standardOptions["markers"]:			# MARKER, NOT LINESTYLE, e.g. "k.", dot
-			kw["marker"]=f ; kw["linestyle"]=''
+			kw["marker"]=f ; kw["linestyle"]=''; kw["markersize"]=defaultMarkerSize
 		elif f in standardOptions["linestyles"]:		# LINESTYLE, NOT MARKER, e.g. "b:", dotted line
-			kw["marker"]='' ; kw["linestyle"]=f
+			kw["marker"]='' ; kw["linestyle"]=f; kw["linewidth"]=defaultLineWidth
 		else:							# NEITHER, let mpl default in markers, suppress line
 			kw["linestyle"]=''
 
