@@ -7,11 +7,12 @@ from cycler import cycler
 # WHAT DEFAULT COLORS AND SYMBOLS DO YOU WANT TO ROTATE THROUGH? WHAT COLORMAP DO YOU WANT INTEGER COLOR VALUES TO REFER TO?
 defCols=['k', 'g', 'b', 'r']
 defMark=['o','^','s','P','d','X','v','+','x']
-defaultMarkerSize = 10
-defaultLineWidth = 2
+#defaultMarkerSize = 10
+#defaultLineWidth = 2
 cycle=cycler(color=defCols*len(defMark))+cycler(marker=defMark*len(defCols)) # https://github.com/matplotlib/cycler/issues/41
 #cmap=matplotlib.cm.inferno
-cmap=matplotlib.cm.rainbow
+#cmap=matplotlib.cm.rainbow
+cmap=matplotlib.cm.plasma
 # WHAT GLOBAL TICK, AXIS, FONT SETTINGS DO YOU WANT?
 params={ 'xtick':{'direction':'in', 'top':True , 'bottom':True , 'major.pad':7 }, # (rule #4)
 	'ytick':{'direction':'in', 'left':True , 'right':True , 'major.pad':7 },
@@ -77,7 +78,7 @@ standardOptions={ "markers" : list(matplotlib.markers.MarkerStyle.markers.keys()
 #  by passing a pair of datasets, y+ye and y-ye, and filling between them). 
 def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fontsize='', **kwargs):
 	global axs,frames,fig,defaultMarkerSize,defaultLineWidth ; axs=[] ; frames=[]
-	defaultLineWidth = kwargs.get("lw", defaultLineWidth); defaultMarkerSize = kwargs.get("ms", defaultMarkerSize);
+	defaultLineWidth = kwargs.get("lw", 2); defaultMarkerSize = kwargs.get("ms", 10);
 	
 	# CREATE THE PLOT OBJECTS
 	if len(multiplot)>0:
@@ -94,7 +95,7 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 		if len(markers)>i:
 			kw=handleMarkers(markers[i]) # turns marker strings into a dict to pass to each plot function
 		else:
-			kw={"linestyle":''}
+			kw={"linestyle":'',"markersize":defaultMarkerSize}
 		# LABELS (for legend) ALSO GO IN KWARGS
 		kw["label"]="dataset "+str(i+1)
 		if len(labels)>i:
@@ -191,6 +192,7 @@ def handleMarkers(m):
 			c,f=m[0],m[1:]					# TODO bug: "99" for purple --> "9","9". or "-." should be dash-dot
 		else:							# length1, or n, try as both color and form
 			c,f=m,m
+
 		if "f" in f:						# FILL BETWEEN, e.g. "k,fABC" black, fill this and other "fABC"
 			kw["fill"]=f#.replace("f","")			# (why not pass indices? this allows safe re-ordering of dsets)
 			kw["linewidth"]=0
@@ -200,7 +202,7 @@ def handleMarkers(m):
 		elif f in standardOptions["linestyles"]:		# LINESTYLE, NOT MARKER, e.g. "b:", dotted line
 			kw["marker"]='' ; kw["linestyle"]=f; kw["linewidth"]=defaultLineWidth
 		else:							# NEITHER, let mpl default in markers, suppress line
-			kw["linestyle"]=''
+			kw["linestyle"]='' ; kw["markersize"]=defaultMarkerSize
 
 		if c in standardOptions["colors"] or c[0]=="#":			# STANDARD COLOR CODE
 			kw["color"]=c
