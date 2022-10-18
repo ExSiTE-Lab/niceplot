@@ -9,9 +9,9 @@ plot([xs,xs,xs],[ys,ys/2,ys/3],title="cycler?",labels=["x^2","1/2*x^2","1/3*x^2"
 
 plot([xs,xs,xs],[ys,ys/2,ys/3],markers=['25,o','50,o','75,o'],title="markers=['25,o','50,o','75,o']",labels=["x^2","1/2*x^2","1/3*x^2"])
 plot([xs,xs],[ys,ys/2],markers=['#882e2e,^'],title="red, defaulted",labels=["x^2","1/2*x^2"],figsize=(10,2),fontsize=10)
-plot([xs,xs],[ys,ys/2],markers=['r'],title="red, defaulted",labels=["wow","oh no"])
+plot([xs,xs],[ys,ys/2],markers=['r'],title="red, defaulted, saved not shown",labels=["wow","oh no"],filename="out.png")
 plot([xs],[ys],markers=['ko'],title="black o",yscale="log")
-plot([xs,xs],[ys,ys/2],markers=['k-','b.'],title="black line, blue dots")
+plot([xs,xs],[ys,ys/2],markers=['k-','b.'],title="black line, blue dots",lw=7)
 plot([xs[10:],xs[10:]],[ys[10:],ys[10:]/2],markers=['k,f0','k,f0'],title="black filled",xlabel="X",ylabel="Y")
 plot([xs[10:],xs[10:]],[ys[10:],ys[10:]/2],markers=['g,fA','g,fA'],title="how do those units look?",xlabel="X",ylabel="TBC (W m^-2 K^-1)",xlim=[None,35])
 plot([xs[10:],xs[10:]],[ys[10:],ys[10:]/2],markers=['tab:blue,f0','00,f0'],title="blue filled,logx",xlabel="X",ylabel="TBC (W m^-2 K^-1)",xscale="log")

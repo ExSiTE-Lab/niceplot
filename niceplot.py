@@ -7,8 +7,8 @@ from cycler import cycler
 # WHAT DEFAULT COLORS AND SYMBOLS DO YOU WANT TO ROTATE THROUGH? WHAT COLORMAP DO YOU WANT INTEGER COLOR VALUES TO REFER TO?
 defCols=['k', 'g', 'b', 'r']
 defMark=['o','^','s','P','d','X','v','+','x']
-#defaultMarkerSize = 10
-#defaultLineWidth = 2
+defaultMarkerSize = 10
+defaultLineWidth = 2
 cycle=cycler(color=defCols*len(defMark))+cycler(marker=defMark*len(defCols)) # https://github.com/matplotlib/cycler/issues/41
 #cmap=matplotlib.cm.inferno
 #cmap=matplotlib.cm.rainbow
@@ -25,6 +25,8 @@ params={ 'xtick':{'direction':'in', 'top':True , 'bottom':True , 'major.pad':7 }
 	}
 for key in params:
 	matplotlib.rc(key, **params[key])
+
+markerSize = defaultMarkerSize ; lineWidth = defaultLineWidth
 
 # RULES FOR PLOTTING:
 # 1. plots must be generated in origin or matlab
@@ -77,8 +79,8 @@ standardOptions={ "markers" : list(matplotlib.markers.MarkerStyle.markers.keys()
 #  marker or linestyle args), and fill_between (you can plot shaded error bands
 #  by passing a pair of datasets, y+ye and y-ye, and filling between them). 
 def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fontsize='', **kwargs):
-	global axs,frames,fig,defaultMarkerSize,defaultLineWidth ; axs=[] ; frames=[]
-	defaultLineWidth = kwargs.get("lw", 2); defaultMarkerSize = kwargs.get("ms", 10);
+	global axs,frames,fig,markerSize,lineWidth ; axs=[] ; frames=[]
+	lineWidth = kwargs.get("lw", defaultLineWidth) ; markerSize = kwargs.get("ms", defaultMarkerSize);
 	
 	# CREATE THE PLOT OBJECTS
 	if len(multiplot)>0:
@@ -95,7 +97,7 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 		if len(markers)>i:
 			kw=handleMarkers(markers[i]) # turns marker strings into a dict to pass to each plot function
 		else:
-			kw={"linestyle":'',"markersize":defaultMarkerSize}
+			kw={"linestyle":'',"markersize":markerSize}
 		# LABELS (for legend) ALSO GO IN KWARGS
 		kw["label"]="dataset "+str(i+1)
 		if len(labels)>i:
@@ -178,14 +180,18 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 		if ".svg" in filename:
 			matplotlib.rc("svg", **{'fonttype':'none'}) # ensures text in svg files is saved as text (for later editing)
 		plt.savefig(filename)
+		plt.close() # without this, a later "show" will blast you by showing all previously-saved plots: https://mldoodles.com/matplotlib-save-plot-but-dont-show/
 	else:
 		plt.show()
 
 # lots of valid options for markers: "k" (black, default in a symbol), "k-" (black line, mpl standard), "k,-" (comma-separated), "tab:blue" (blue, default in a symbol), "tab:blue,-" (blue line), "o" (default in the color, o symbol), "-" (defailt in the color, line symbol)
 def handleMarkers(m):
+	#print("m",m)
 	kw={}
 	#m=markers[i]
 	if isinstance(m,str):
+		if len(m)==0:
+			return {"linestyle":'',"markersize":markerSize}
 		if "," in m:						# COMMA-SEPARATED, color,form
 			c,f=m.split(",")
 		elif len(m)==2:						# OR DEFAULT TO char1,char2
@@ -198,11 +204,11 @@ def handleMarkers(m):
 			kw["linewidth"]=0
 			kw["alpha"]=.2
 		elif f in standardOptions["markers"]:			# MARKER, NOT LINESTYLE, e.g. "k.", dot
-			kw["marker"]=f ; kw["linestyle"]=''; kw["markersize"]=defaultMarkerSize
+			kw["marker"]=f ; kw["linestyle"]=''; kw["markersize"]=markerSize
 		elif f in standardOptions["linestyles"]:		# LINESTYLE, NOT MARKER, e.g. "b:", dotted line
-			kw["marker"]='' ; kw["linestyle"]=f; kw["linewidth"]=defaultLineWidth
+			kw["marker"]='' ; kw["linestyle"]=f; kw["linewidth"]=lineWidth
 		else:							# NEITHER, let mpl default in markers, suppress line
-			kw["linestyle"]='' ; kw["markersize"]=defaultMarkerSize
+			kw["linestyle"]='' ; kw["markersize"]=markerSize
 
 		if c in standardOptions["colors"] or c[0]=="#":			# STANDARD COLOR CODE
 			kw["color"]=c
