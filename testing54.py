@@ -4,6 +4,7 @@ from niceplot import *
 xs=np.linspace(0,10,20)
 ys=xs**2
 
+plot([xs,xs[10:],xs[:15]],[ys,ys[10:]/2,ys[:15]/3],markers=['k-','b-','r-'],title="savedAsCSV",xlabel="x values",ylabel="TBC (W m^-2 K^-1)",filename="testing54.csv",labels=["A","B","C"])
 #plot([xs,xs,xs],[ys,ys/2,ys/3],title="cycler?",labels=["x^2","1/2*x^2","1/3*x^2"])
 #plot([xs,xs,xs],[ys,ys/2,ys/3],title="cycler?",labels=["x^2","1/2*x^2","1/3*x^2"])
 

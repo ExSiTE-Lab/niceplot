@@ -81,38 +81,13 @@ standardOptions={ "markers" : list(matplotlib.markers.MarkerStyle.markers.keys()
 #  marker or linestyle args), and fill_between (you can plot shaded error bands
 #  by passing a pair of datasets, y+ye and y-ye, and filling between them). 
 def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fontsize='',extras=[], **kwargs):
-	# if we're saving files, use the "Agg" backend. (and save off whatever the current backend is, and restore it after we save it, to prevent messing up the user's python environment). if we're showing, just default to whatever the user's default is
+	# if we're saving files, use the "Agg" backend. (if you don't, saving off, say, a thousand or so plots will fill up your memory, as some backends suck at garbage collection: https://stackoverflow.com/questions/31156578/matplotlib-doesnt-release-memory-after-savefig-and-close ). So we'll save off whatever the current backend is, and restore it after we save it, to prevent messing up the user's python environment. if we're showing, just default to whatever the user's default is. (other useful links: https://stackoverflow.com/questions/56656777/userwarning-matplotlib-is-currently-using-agg-which-is-a-non-gui-backend-so , https://stackoverflow.com/questions/55811545/importerror-cannot-load-backend-tkagg-which-requires-the-tk-interactive-fra )
 	backend=matplotlib.get_backend()
-	if len(filename)!=0 and filename!="PLOTOBJ":
-		matplotlib.use("Agg") # https://stackoverflow.com/questions/31156578/matplotlib-doesnt-release-memory-after-savefig-and-close
+	if len(filename)!=0:
+		matplotlib.use("Agg") # 
 
-	#if len(filename)==0 or filename=="PLOTOBJ":
-	#	# if macos error, try: "export MPLBACKEND=TKAgg" https://stackoverflow.com/questions/55811545/importerror-cannot-load-backend-tkagg-which-requires-the-tk-interactive-fra
-	#	#matplotlib.use("TkAgg") # https://stackoverflow.com/questions/56656777/userwarning-matplotlib-is-currently-using-agg-which-is-a-non-gui-backend-so
-	#else:
-	#	matplotlib.use("Agg") # https://stackoverflow.com/questions/31156578/matplotlib-doesnt-release-memory-after-savefig-and-close
-
-
-
-	#print(kwargs.get("filename",""))
 	if ".csv" in filename:
-		"""
-		f=open(f,'w')
-		lens=[ len(x) for x in xs ]
-		s="".join( [ d.replace(",",";")+",,," for d in datalabels ])
-		f.write(s+"\n")
-		s="".join( [ xlabel+","+str(ylabel)+",," for i in range(len(xs)) ])
-		f.write(s+"\n")
-		for r in range(max(lens)): # for each row
-		s=""
-		for x,y,ye in zip(xs,ys,errorY):
-			if r>=len(x):
-				s=s+",,,"
-			else:
-				s=s+str(x[r])+","+str(y[r])+","+str(ye[r])+","
-			f.write(s+"\n")
-			f.close()
-		"""
+		saveCSV(xs,ys,kwargs.get("xlabel","xlabel"),kwargs.get("ylabel","ylabel"),labels,filename)
 		return
 		#data=
 		#numpy.savetxt(kwargs["filename"], , delimiter=",")
@@ -327,3 +302,11 @@ def setLegendLW(lw):
 
 def getPlotObjs():
 	return axs[0],fig
+
+def saveCSV(xs,ys,xlabel,ylabel,labels,filename):
+	tosave=np.zeros(( max( [ len(x) for x in xs ] ) , len(xs)*3 ) ).astype(str) # 3 columns per dataset (x,y,padding), fields will hold strings
+	for i,(x,y) in enumerate(zip(xs,ys)):
+		tosave[:len(x),i*3]=x.astype(str) ; tosave[:len(x),i*3+1]=y.astype(str) # set columns from datasets
+		tosave[len(x):,i*3]='' ; tosave[len(x):,i*3+1]='' ; tosave[:,i*3+2]='' # set pad-column, and "the rest of each column" (for shorter datasets) to blank
+	header=",,,".join(labels)+"\n"+"".join( [xlabel+","+ylabel+",,"]*len(xs) ) # include datalabels and x,y labels
+	np.savetxt(filename,tosave,header=header,delimiter=',',fmt="%s")
