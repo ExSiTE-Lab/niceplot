@@ -11,7 +11,7 @@ zs=xs[None,:]**2-10*np.sin(ys[:,None])
 ls=[":"]*30 ; ls[5]="-"
 #contour(zs,xs,ys,heatOrContour="both",linestyle=ls,linewidth=3)
 #contour(zs,xs,ys,heatOrContour="both",linestyle=ls,linecolor=["black"]*5+["red"]+["black"]*40)
-#contour(zs,xs,ys,heatOrContour="contour",linestyle=ls,linecolor="viridis")
+contour(zs,xs,ys,heatOrContour="contour",linestyle=ls,linecolor="viridis")
 mkr="." ; c=np.linspace(0,1,100)
 #contour(zs,xs,ys,heatOrContour="contour",linestyle=ls,linecolor="viridis",overplot=[{"xs":xs,"ys":xs**3/100,"kind":"scatter","marker":mkr,"c":c},{"xs":xs,"ys":xs**2/10,"kind":"line","linestyle":"-","color":"black"}])
 scatx=xs[::5] ; scaty=scatx**3/100

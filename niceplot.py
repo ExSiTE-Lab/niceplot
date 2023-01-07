@@ -21,10 +21,12 @@ params={ 'xtick':{'direction':'in', 'top':True , 'bottom':True , 'major.pad':7 }
 	#'svg':{'fonttype':'none'}, # ensure fonts in exported svgs are text objects wen you open them with inkscape: https://stackoverflow.com/questions/34387893/output-matplotlib-figure-to-svg-with-text-as-text-not-curves
 	'figure':{'figsize':(8,6),'dpi':192},
 	'legend':{'edgecolor':'black','fancybox':False}			# fancybox=false removes corner curvature
-	
+	#'mathtext':{'default': 'regular' }
 	}
+def setPlotRC(key,para):
+	matplotlib.rc(key, **para)
 for key in params:
-	matplotlib.rc(key, **params[key])
+	setPlotRC(key,params[key]) # replaces "matplotlib.rc(key, **params[key])"
 
 markerSize = defaultMarkerSize ; lineWidth = defaultLineWidth
 
@@ -78,7 +80,43 @@ standardOptions={ "markers" : list(matplotlib.markers.MarkerStyle.markers.keys()
 #  marker args, etc), lines (linestyle args), errorbars (ax.errorbar, with both
 #  marker or linestyle args), and fill_between (you can plot shaded error bands
 #  by passing a pair of datasets, y+ye and y-ye, and filling between them). 
-def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fontsize='', **kwargs):
+def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fontsize='',extras=[], **kwargs):
+	# if we're saving files, use the "Agg" backend. (and save off whatever the current backend is, and restore it after we save it, to prevent messing up the user's python environment). if we're showing, just default to whatever the user's default is
+	backend=matplotlib.get_backend()
+	if len(filename)!=0 and filename!="PLOTOBJ":
+		matplotlib.use("Agg") # https://stackoverflow.com/questions/31156578/matplotlib-doesnt-release-memory-after-savefig-and-close
+
+	#if len(filename)==0 or filename=="PLOTOBJ":
+	#	# if macos error, try: "export MPLBACKEND=TKAgg" https://stackoverflow.com/questions/55811545/importerror-cannot-load-backend-tkagg-which-requires-the-tk-interactive-fra
+	#	#matplotlib.use("TkAgg") # https://stackoverflow.com/questions/56656777/userwarning-matplotlib-is-currently-using-agg-which-is-a-non-gui-backend-so
+	#else:
+	#	matplotlib.use("Agg") # https://stackoverflow.com/questions/31156578/matplotlib-doesnt-release-memory-after-savefig-and-close
+
+
+
+	#print(kwargs.get("filename",""))
+	if ".csv" in filename:
+		"""
+		f=open(f,'w')
+		lens=[ len(x) for x in xs ]
+		s="".join( [ d.replace(",",";")+",,," for d in datalabels ])
+		f.write(s+"\n")
+		s="".join( [ xlabel+","+str(ylabel)+",," for i in range(len(xs)) ])
+		f.write(s+"\n")
+		for r in range(max(lens)): # for each row
+		s=""
+		for x,y,ye in zip(xs,ys,errorY):
+			if r>=len(x):
+				s=s+",,,"
+			else:
+				s=s+str(x[r])+","+str(y[r])+","+str(ye[r])+","
+			f.write(s+"\n")
+			f.close()
+		"""
+		return
+		#data=
+		#numpy.savetxt(kwargs["filename"], , delimiter=",")
+
 	global axs,frames,fig,markerSize,lineWidth ; axs=[] ; frames=[]
 	lineWidth = kwargs.get("lw", defaultLineWidth) ; markerSize = kwargs.get("ms", defaultMarkerSize);
 	
@@ -105,7 +143,7 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 
 		# ADD TO PLOT
 		if len(ye)>i:							# ERRORBARS
-			ax.errorbar(xs[i], ys[i], yerr=ye, capsize=2, **kw)
+			ax.errorbar(xs[i], ys[i], yerr=ye[i], capsize=2, **kw)
 		elif "fill" in kw.keys():					# FILL BETWEEN
 			for j in range(i,len(xs)):				# check all other datasets (all after this one!)
 				if (i==j) or (j>=len(markers)):
@@ -117,27 +155,44 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 					break
 		else:								# OR BASIC PLOT WITH POINTS OR LINES
 			ax.plot(xs[i], ys[i], **kw)
+		#print(kw)
 	for ax in axs:
-		if len(labels)==0 or max( [ len(lb) for lb in labels ] ) > 1:
+		if len(labels)==0 or max( [ len(lb) for lb in labels ] ) > 0:
 			l=ax.legend()
 			frames.append( l.get_frame() )
 	#plt.legend()
 
-	# HANDLE OTHER ARGUMENTS. Each allowable is mapped to a function, and a default
-	if "xscale" not in kwargs.keys() or kwargs["xscale"]!="log":
-		xlim=list(axs[0].get_xlim()) ; xlim.append(0) ; xlim=[min(xlim),max(xlim)] ; axs[0].set_xlim(xlim)
-	if "yscale" not in kwargs.keys() or kwargs["yscale"]!="log":
-		ylim=list(axs[0].get_ylim()) ; ylim.append(0) ; ylim=[min(ylim),max(ylim)] ; axs[0].set_ylim(ylim)
+	for ax in axs:
+		for key,getter,setter in zip(["ylim","xlim"],[ax.get_ylim,ax.get_xlim],[ax.set_ylim,ax.set_xlim]):
+			passedlims=kwargs.get(key,[None,None]) ; curlims=list(getter()) ; scale=kwargs.get(key[0]+"scale","linear")
+			# rule: linear plots should include zero (don't "cheat" by zooming into only slightly-varying data!). this is overridable by including "nonzero" in the lims passed, OR, by specifying actual values 
+			if scale=="linear" and "nonzero" not in passedlims: # read in existing limits, check if zero is outside their bounds
+				curlims.append(0) ; curlims=[min(curlims),max(curlims)] ; setter(curlims)
+			passedlims=[ None if l=="nonzero" else l for l in passedlims ] # remove "nonzero" from passed
+			if True in [ p is not None for p in passedlims ]:
+	#		if "log" not in kwargs.get(key[0]+"scale",""):
+				setter(passedlims) # and set passed (may have been defaulted to Nones, which does nothing)
+			#print(setter,passedlims)
 
-	axs[0].set_title( processText( kwargs.get("title","TITLE") ) ) # get "title" kw from kwargs, defaulting to "title". pass through
-	axs[0].set_xlabel( processText( kwargs.get("xlabel","XLABEL") ) ) # processText, then set as title. and so on for xlabel,ylabel
-	axs[0].set_ylabel( processText( kwargs.get("ylabel","YLABEL") ) ) 
-	if "xlim" in kwargs.keys():
-		axs[0].set_xlim( kwargs.get("xlim") )
-	if "ylim" in kwargs.keys():
-		axs[0].set_ylim( kwargs.get("ylim") )
-	axs[0].set_xscale( kwargs.get("xscale","linear") )
-	axs[0].set_yscale( kwargs.get("yscale","linear") )
+	#print("niceplot > plot: xscale",kwargs.get("xscale",""),"xlim",axs[0].get_xlim())
+
+	# HANDLE OTHER ARGUMENTS. Each allowable is mapped to a function, and a default
+	#if kwargs.get("xscale","linear")!="log" and "nonzero" not in kwargs.get("xlim",["",""]):
+	#	xlim=list(axs[0].get_xlim()) ; xlim.append(0) ; xlim=[min(xlim),max(xlim)] ; axs[0].set_xlim(xlim)
+	#if kwargs.get("yscale","linear")!="log" and "nonzero" not in kwargs.get("ylim",["",""]):
+	#	ylim=list(axs[0].get_ylim()) ; ylim.append(0) ; ylim=[min(ylim),max(ylim)] ; axs[0].set_ylim(ylim)
+
+		ax.set_title( processText( kwargs.get("title","TITLE") ) ) # get "title" kw from kwargs, defaulting to "title". pass through
+		ax.set_xlabel( processText( kwargs.get("xlabel","XLABEL") ) ) # processText, then set as title. and so on for xlabel,ylabel
+		ax.set_ylabel( processText( kwargs.get("ylabel","YLABEL") ) ) 
+		#if "xlim" in kwargs.keys():
+		#	axs[0].set_xlim( kwargs.get("xlim") )
+		#if "ylim" in kwargs.keys():
+		#	ylim=kwargs.get("ylim") ; ylim=[ None if l=="nonzero" else l for l in ylim ]
+		#	print(ylim)
+		#	axs[0].set_ylim( ylim )
+		ax.set_xscale( kwargs.get("xscale","linear") )
+		ax.set_yscale( kwargs.get("yscale","linear") )
 	setFace( kwargs.get("facecolor","white") )
 	if "figsize" in kwargs.keys():				# most are okay receiving None, except for set_size_inches
 		fig.set_size_inches( kwargs.get("figsize") )
@@ -149,7 +204,7 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 		for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
 			ax.get_xticklabels() + ax.get_yticklabels() + axs[0].get_legend().get_texts()):
 			#item.set_fontsize(20)
-			print(item)
+			#print(item)
 			item.set_fontsize( kwargs.get("fontsize"))
 		#for item in axs[0].get_legend().get_texts():
 		#	print(item)
@@ -176,13 +231,21 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 #				d=f2(d)
 #			f(d)			# replaces things like "ax.set_title(value)"
 
+	for extra in extras:
+		extra(axs,fig)
+	#if filename=="PLOTOBJ":
+	#	return axs[0],fig
 	if len(filename)>0:
 		if ".svg" in filename:
 			matplotlib.rc("svg", **{'fonttype':'none'}) # ensures text in svg files is saved as text (for later editing)
+		directory="/".join(filename.replace("\\","/").split("/")[:-1]) # path/to/file.png --> path/to
+		if len(directory)>0: # possible image file was destined for THIS directory (""), so skip if that's the case
+			os.makedirs(directory,exist_ok=True)
 		plt.savefig(filename)
 		plt.close() # without this, a later "show" will blast you by showing all previously-saved plots: https://mldoodles.com/matplotlib-save-plot-but-dont-show/
 	else:
 		plt.show()
+	matplotlib.use(backend)
 
 # lots of valid options for markers: "k" (black, default in a symbol), "k-" (black line, mpl standard), "k,-" (comma-separated), "tab:blue" (blue, default in a symbol), "tab:blue,-" (blue line), "o" (default in the color, o symbol), "-" (defailt in the color, line symbol)
 def handleMarkers(m):
@@ -249,6 +312,8 @@ def processText(text): # automagically recognize things like "W m^-2 K^-1" and t
 			b1="".join( [c for c in b if c in "-0123456789." ] )	# only "-1" should be superscripted
 			b2="".join( [c for c in b if c not in "-0123456789." ] ) # ")" should not be superscripted
 			terms[i]=a+"$^{"+b1+"}$"+b2				# reassembled: "K$^{-1}$)"
+			#terms[i]=a+"\\textsuperscript{"+b1+"}"+b2
+	#print(" ".join(terms))
 	return " ".join(terms)
 
 def setFace(fc): # https://stackoverflow.com/questions/19863368/how-to-change-the-legend-edgecolor-and-facecolor-in-matplotlib
@@ -259,3 +324,6 @@ def setFace(fc): # https://stackoverflow.com/questions/19863368/how-to-change-th
 def setLegendLW(lw):
 	for fr in frames:
 		fr.set_linewidth(lw)
+
+def getPlotObjs():
+	return axs[0],fig
