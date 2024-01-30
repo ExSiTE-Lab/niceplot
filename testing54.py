@@ -1,10 +1,37 @@
 import numpy as np
 from niceplot import *
+import sys
 
 xs=np.linspace(0,10,20)
 ys=xs**2
 
-plot([xs,xs[10:],xs[:15]],[ys,ys[10:]/2,ys[:15]/3],markers=['k-','b-','r-'],title="savedAsCSV",xlabel="x values",ylabel="TBC (W m^-2 K^-1)",filename="testing54.csv",labels=["A","B","C"])
+#def ano(axs,fig):
+#	axs[0].annotate("A",xy=(xs[10],ys[10]),xytext=(xs[10],ys[10]+10),arrowprops={"facecolor":"black"})
+#plot([xs,xs[10:],xs[:15]],[ys,ys[10:]/2,ys[:15]/3],markers=['k.','bo','r.'],title="annotations",xlabel="x values",ylabel="TBC (W m^-2 K^-1)",labels=["A","B","C"],extras=[ano])
+
+plot([xs,xs+.1,xs+.3],[ys,ys/2,ys/4],ye=[10,np.random.random(20)*10,[np.random.random(20)*5,np.random.random(20)*10]],title="error bars, mixed, asymmetric",labels=["uniform","point-by-point","point-by-point, asymmetric"]) ; sys.exit()
+
+plot([xs,xs+.1,xs+.2,xs+.3],[ys,ys/2,ys/3,ys/4],ye=[10,np.random.random(20)*10,[10,20],[np.random.random(20)*5,np.random.random(20)*10]],title="error bars, mixed, asymmetric",labels=["uniform","point-by-point","uniform, asymmetric","point-by-point, asymmetric"]) #; sys.exit()
+
+#xs=np.asarray([0,1]) ; ys=np.random.random(2) ; ye=[1,[1,.5],[[1,1],[.5,.5]]]
+#plot([xs,xs+.1,xs+.2],[ys,ys*2,ys*3],ye=ye,title="error bars, CHECK OUR WARNING") ; sys.exit()
+
+#plot([xs,xs[10:],xs[:15]],[ys,ys[10:]/2,ys[:15]/3],markers=['w.','bo','r.'],title="invert colors",xlabel="x values",ylabel="TBC (W m^-2 K^-1)",labels=["A","B","C"],extras=[invertColors])
+
+
+#plot([xs,xs[10:],xs[:15]],[ys,ys[10:]/2,ys[:15]/3],ye=[10,np.linspace(5,20,10)],markers=['k.','bo','r.'],title="errorbars",xlabel="x values",ylabel="TBC (W m^-2 K^-1)",labels=["A","B","C"])
+#plot([xs,xs[10:],xs[:15]],[ys,ys[10:]/2,ys[:15]/3],ye=[10,np.linspace(5,20,10)],markers=['k.','bo','r.'],title="errorbars-CSV",xlabel="x values",ylabel="TBC (W m^-2 K^-1)",labels=["A","B","C"],filename="testing54.csv")
+Xs,Ys,Ye,XLB,YLB,DLBS=readCSV("testing54.csv")
+#print(Xs,Ys,Ye)
+#plot(Xs,Ys,ye=Ye,markers=['k.','bo','r.'],title="readread CSV",xlabel=XLB,ylabel=YLB,labels=DLBS)
+
+
+
+
+#plot([xs,xs[10:],xs[:15]],[ys,ys[10:]/2,ys[:15]/3],markers=['k-','b-','r-'],title="savedAsCSV",xlabel="x values",ylabel="TBC (W m^-2 K^-1)",filename="testing54.csv",labels=["A","B","C"])
+
+#plot([xs,xs[10:],xs[:15]],[ys,ys[10:]/2,ys[:15]/3],markers=['k-','b-','r-'],title="savedAsCSV",xlabel="x values",ylabel="TBC (W m^-2 K^-1)",filename="testing54.csv",labels=["A","B","C"])
+
 #plot([xs,xs,xs],[ys,ys/2,ys/3],title="cycler?",labels=["x^2","1/2*x^2","1/3*x^2"])
 #plot([xs,xs,xs],[ys,ys/2,ys/3],title="cycler?",labels=["x^2","1/2*x^2","1/3*x^2"])
 
@@ -13,7 +40,7 @@ plot([xs,xs[10:],xs[:15]],[ys,ys[10:]/2,ys[:15]/3],markers=['k-','b-','r-'],titl
 #plot([xs,xs],[ys,ys/2],markers=['r'],title="red, defaulted, saved not shown",labels=["wow","oh no"],filename="out.png")
 #plot([xs],[ys],markers=['ko'],title="black o",yscale="log")
 #plot([xs,xs],[ys,ys/2],markers=['k-','b.'],title="black line, blue dots",lw=7)
-#plot([xs[10:],xs[10:]],[ys[10:],ys[10:]/2],markers=['k,f0','k,f0'],title="black filled",xlabel="X",ylabel="Y")
+plot([xs[10:],xs[10:]],[ys[10:],ys[10:]/2],markers=['k,f0','k,f0'],title="black filled",xlabel="X",ylabel="Y")
 #plot([xs[10:],xs[10:]],[ys[10:],ys[10:]/2],markers=['g,fA','g,fA'],title="how do those units look?",xlabel="X",ylabel="TBC (W m^-2 K^-1)",xlim=[None,35])
 plot([xs[10:],xs[10:]],[ys[10:],ys[10:]/2],markers=['tab:blue,f0','00,f0'],title="blue filled,logx",xlabel="X",ylabel="TBC (W m^-2 K^-1)",xscale="log")
 plot([xs],[ys],markers=['tab:orange'],title="orange default sym",ms=25)

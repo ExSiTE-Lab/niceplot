@@ -14,13 +14,13 @@ cycle=cycler(color=defCols*len(defMark))+cycler(marker=defMark*len(defCols)) # h
 #cmap=matplotlib.cm.rainbow
 cmap=matplotlib.cm.plasma
 # WHAT GLOBAL TICK, AXIS, FONT SETTINGS DO YOU WANT?
-params={ 'xtick':{'direction':'in', 'top':True , 'bottom':True , 'major.pad':7 }, # (rule #4)
-	'ytick':{'direction':'in', 'left':True , 'right':True , 'major.pad':7 },
-	'font':{'family':'arial', 'weight':'regular' , 'size':16}, # (rule #5)
-	'axes':{'autolimit_mode':'round_numbers',"prop_cycle":cycle, 'titlesize':16}, # (rule #6 Titile size should be the same size as the fontsize)
+params={ 'xtick':{ 'direction':'in', 'top':True , 'bottom':True , 'major.pad':7 }, # (rule #4)
+	'ytick':{ 'direction':'in', 'left':True , 'right':True , 'major.pad':7 },
+	'font':{ 'family':'arial', 'weight':'regular' , 'size':16 }, # (rule #5)
+	'axes':{ 'autolimit_mode':'round_numbers' , "prop_cycle":cycle , 'titlesize':16 }, # (rule #6 Titile size should be the same size as the fontsize)
 	#'svg':{'fonttype':'none'}, # ensure fonts in exported svgs are text objects wen you open them with inkscape: https://stackoverflow.com/questions/34387893/output-matplotlib-figure-to-svg-with-text-as-text-not-curves
-	'figure':{'figsize':(8,6),'dpi':192},
-	'legend':{'edgecolor':'black','fancybox':False}			# fancybox=false removes corner curvature
+	'figure':{ 'figsize':(8,6),'dpi':192 },
+	'legend':{ 'edgecolor':'black' , 'fancybox':False }			# fancybox=false removes corner curvature
 	#'mathtext':{'default': 'regular' }
 	}
 def setPlotRC(key,para):
@@ -80,15 +80,19 @@ standardOptions={ "markers" : list(matplotlib.markers.MarkerStyle.markers.keys()
 #  marker args, etc), lines (linestyle args), errorbars (ax.errorbar, with both
 #  marker or linestyle args), and fill_between (you can plot shaded error bands
 #  by passing a pair of datasets, y+ye and y-ye, and filling between them). 
-def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fontsize='',extras=[], **kwargs):
+def plot( xs, ys, xe='', ye='', markers='', labels='', filename='', multiplot='', fontsize='',extras=[], **kwargs):
 	# if we're saving files, use the "Agg" backend. (if you don't, saving off, say, a thousand or so plots will fill up your memory, as some backends suck at garbage collection: https://stackoverflow.com/questions/31156578/matplotlib-doesnt-release-memory-after-savefig-and-close ). So we'll save off whatever the current backend is, and restore it after we save it, to prevent messing up the user's python environment. if we're showing, just default to whatever the user's default is. (other useful links: https://stackoverflow.com/questions/56656777/userwarning-matplotlib-is-currently-using-agg-which-is-a-non-gui-backend-so , https://stackoverflow.com/questions/55811545/importerror-cannot-load-backend-tkagg-which-requires-the-tk-interactive-fra )
+
+	if ".csv" in filename:
+		saveCSV(xs,ys,ye,kwargs.get("xlabel","xlabel"),kwargs.get("ylabel","ylabel"),labels,filename)
+		return
+
+
 	backend=matplotlib.get_backend()
 	if len(filename)!=0:
 		matplotlib.use("Agg") # 
 
-	if ".csv" in filename:
-		saveCSV(xs,ys,kwargs.get("xlabel","xlabel"),kwargs.get("ylabel","ylabel"),labels,filename)
-		return
+
 		#data=
 		#numpy.savetxt(kwargs["filename"], , delimiter=",")
 
@@ -117,8 +121,33 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 			kw["label"]=processText(labels[i])
 
 		# ADD TO PLOT
-		if len(ye)>i:							# ERRORBARS
+		# ERRORBARS: each y entry may have a corresponding ye entry. the ye entry may be:
+		# a) single value - all datapoints in the set get the same sized symmetric error bars
+		# b) list of values - each datapoint receives its own symmetric error bar
+		# c) pair of single values - all datapoint sin the set get the same sized asymettric error bars
+		# d) pair of lists - each datapoint receives its own asymmetric error bar
+		# BEWARE: if there are 2 points in a dataset and we receive a pair of ye values: it is undefined whether that intends (b) or (c).
+		#if len(ye)>i:
+		#	print("YERROR:",ye[i])
+			"""
+			if islist(ye[i]) and len(ye[i])==2 and len(ys[i])==2 and not islist(ye[i][0]):
+				print("WARNING FOR ERROR SET "+str(i)+": if a y error entry has length==2 AND the dataset itself has length==2: it is unclear if the user intends for: each datapoint receives a symmetric error bar, OR, the full dataset receives asymmetric error bars (same for each point). if you desire the latter (or wish to suppress this error, please fully-define a 2x2 matrix: [lowerboundslist,upperboundslist]. WE WILL ASSUME YOU MEAN POINT-SPECIFIC, NOT ASYMETRIC")
+				ye[i]=np.asarray(ye[i])[None,:]*np.ones(2)[:,None]
+			if islist(ye[i]) and len(ye[i])==2:
+				if islist(ye[i][0]):
+					ye[i]=np.asarray(ye[i])
+				else:
+					ye[i]=np.asarray(ye[i]).reshape((2,1))
+			"""
+		#	ax.errorbar(xs[i], ys[i], yerr=ye[i], capsize=2, **kw)
+
+		ye=list(ye)+[0]*(len(xs)-len(ye)) ; xe=list(xe)+[0]*(len(xs)-len(xe))
+		if ye[i]!=0 and xe[i]!=0: #len(ye)>i or len(xe)>i:
+			ax.errorbar(xs[i], ys[i], yerr=ye[i], xerr=xe[i], capsize=2, **kw)
+		elif ye[i]!=0:
 			ax.errorbar(xs[i], ys[i], yerr=ye[i], capsize=2, **kw)
+		elif xe[i]!=0:
+			ax.errorbar(xs[i], ys[i], xerr=xe[i], capsize=2, **kw)
 		elif "fill" in kw.keys():					# FILL BETWEEN
 			for j in range(i,len(xs)):				# check all other datasets (all after this one!)
 				if (i==j) or (j>=len(markers)):
@@ -137,7 +166,7 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 			frames.append( l.get_frame() )
 	#plt.legend()
 
-	for ax in axs:
+	for i,ax in enumerate(axs):
 		for key,getter,setter in zip(["ylim","xlim"],[ax.get_ylim,ax.get_xlim],[ax.set_ylim,ax.set_xlim]):
 			passedlims=kwargs.get(key,[None,None]) ; curlims=list(getter()) ; scale=kwargs.get(key[0]+"scale","linear")
 			# rule: linear plots should include zero (don't "cheat" by zooming into only slightly-varying data!). this is overridable by including "nonzero" in the lims passed, OR, by specifying actual values 
@@ -159,7 +188,12 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 
 		ax.set_title( processText( kwargs.get("title","TITLE") ) ) # get "title" kw from kwargs, defaulting to "title". pass through
 		ax.set_xlabel( processText( kwargs.get("xlabel","XLABEL") ) ) # processText, then set as title. and so on for xlabel,ylabel
-		ax.set_ylabel( processText( kwargs.get("ylabel","YLABEL") ) ) 
+		ylb=kwargs.get("ylabel","YLABEL")
+		if isinstance(ylb,list):
+			ax.set_ylabel( processText(ylb[i]) )
+		else:
+			ax.set_ylabel( processText(ylb) )	
+		#ax.set_ylabel( processText( kwargs.get("ylabel","YLABEL") ) ) 
 		#if "xlim" in kwargs.keys():
 		#	axs[0].set_xlim( kwargs.get("xlim") )
 		#if "ylim" in kwargs.keys():
@@ -222,6 +256,11 @@ def plot( xs, ys, ye='', markers='', labels='', filename='', multiplot='', fonts
 		plt.show()
 	matplotlib.use(backend)
 
+def islist(val): # WHY? if val is a numpy array, then isinstance(val,list) will return False!
+	if isinstance(val,(float,int,str)):
+		return False
+	return True
+
 # lots of valid options for markers: "k" (black, default in a symbol), "k-" (black line, mpl standard), "k,-" (comma-separated), "tab:blue" (blue, default in a symbol), "tab:blue,-" (blue line), "o" (default in the color, o symbol), "-" (defailt in the color, line symbol)
 def handleMarkers(m):
 	#print("m",m)
@@ -259,6 +298,10 @@ def handleMarkers(m):
 		return kw
 	return m
 
+# usage: "plot(Xs,Ys,markers=rainbow(len(Xs),":"))"
+def rainbow(n,m='-'):
+	return [ str(int(i/n*100))+","+m for i in range(n) ]
+
 def genMultiAx(method,indices,scaling=''):
 	axs=[] ; nPlots=len(set(indices))
 	if len(scaling)==0:
@@ -284,8 +327,8 @@ def processText(text): # automagically recognize things like "W m^-2 K^-1" and t
 	for i,t in enumerate(terms):
 		if "^" in t:
 			a,b=t.split("^")					# "K^-1)" --> ["K","-1)"]
-			b1="".join( [c for c in b if c in "-0123456789." ] )	# only "-1" should be superscripted
-			b2="".join( [c for c in b if c not in "-0123456789." ] ) # ")" should not be superscripted
+			b1="".join( [c for c in b if c in "-0123456789.+" ] )	# only "-1" should be superscripted. ion doses may be "C^+" too, for example
+			b2="".join( [c for c in b if c not in "-0123456789.+" ] ) # ")" should not be superscripted
 			terms[i]=a+"$^{"+b1+"}$"+b2				# reassembled: "K$^{-1}$)"
 			#terms[i]=a+"\\textsuperscript{"+b1+"}"+b2
 	#print(" ".join(terms))
@@ -301,12 +344,105 @@ def setLegendLW(lw):
 		fr.set_linewidth(lw)
 
 def getPlotObjs():
+	#print(id(axs[0]),id(fig),id(plt))
 	return axs[0],fig
 
-def saveCSV(xs,ys,xlabel,ylabel,labels,filename):
-	tosave=np.zeros(( max( [ len(x) for x in xs ] ) , len(xs)*3 ) ).astype(str) # 3 columns per dataset (x,y,padding), fields will hold strings
-	for i,(x,y) in enumerate(zip(xs,ys)):
+def invertPlotColors(axs,fig):
+	axs[0].set_facecolor("black")			# inside area of plot --> black
+	fig.set_facecolor("black")			# outside area of plot --> black
+	for s in ["bottom","top","left","right"]:	# border lines around plot --> white
+		axs[0].spines[s].set_color("white")
+	axs[0].xaxis.label.set_color('white')		# x axis label text --> white
+	axs[0].tick_params(axis='x', colors='white')	# x axis tick marks --> white
+	axs[0].yaxis.label.set_color('white')
+	axs[0].tick_params(axis='y', colors='white')
+	axs[0].title.set_color('white')
+	leg=axs[0].legend()				# retreive legend from the axes
+	for text in leg.get_texts():
+		text.set_color("white")			# each line of text on the legend --> white
+	frame=leg.get_frame()
+	frame.set_facecolor('black')			# inside area of legend --> black
+	frame.set_edgecolor('white')			# legend border lines --> white
+
+
+
+def saveCSV(xs,ys,ye,xlabel,ylabel,labels,filename):
+	#print("saveCSV","xs",xs,"ys",ys,"ye",ye,"xlabel",xlabel,"ylabel",ylabel,"labels",labels,"filename",filename)
+	#xs=[ np.asarray(x) for x in xs ] ; ys=[ np.asarray(y) for y in ys ] # each element must be numpy array in order for astype to work
+	ye=list(ye) ; ye=ye+['']*(len(xs)-len(ye)) #; ye
+	maxlen=max( [ len(x) for x in xs ] )
+	tosave=np.zeros(( maxlen , len(xs)*3 ) ).astype(str) ; tosave[:,:]='' # 3 columns per dataset (x,y,padding), fields will hold strings
+	#print(ye)
+	for i,(x,y,e) in enumerate(zip(xs,ys,ye)):
+		if len(x)==0:
+			continue
+		x,y=np.asarray(x),np.asarray(y)
 		tosave[:len(x),i*3]=x.astype(str) ; tosave[:len(x),i*3+1]=y.astype(str) # set columns from datasets
-		tosave[len(x):,i*3]='' ; tosave[len(x):,i*3+1]='' ; tosave[:,i*3+2]='' # set pad-column, and "the rest of each column" (for shorter datasets) to blank
+		#print(type(e))
+		if isinstance(e,(int,float)): # error bars can be a constant number (same errorbar for each datapoint)
+			tosave[:len(x),i*3+2]=str(e)
+		elif len(e)==len(x): # or it can be a different value for each datapoint
+			e=np.asarray(e)
+			tosave[:len(e),i*3+2]=e.astype(str)
+
 	header=",,,".join(labels)+"\n"+"".join( [xlabel+","+ylabel+",,"]*len(xs) ) # include datalabels and x,y labels
 	np.savetxt(filename,tosave,header=header,delimiter=',',fmt="%s")
+
+def readCSV(filename):
+	lines=open(filename).readlines()
+	labels=lines[0][2:].split(",")[::3]
+	xlabel,ylabel=lines[1][2:].split(",")[:2]
+	xs,ys,ye=[],[],[]
+	for i in range(len(labels)):
+		xs.append([]) ; ys.append([]) ; ye.append([])
+		for l in lines[2:]:
+			x,y,e=l.split(",")[i*3:i*3+3]
+			if len(x)==0:
+				break
+			xs[-1].append(float(x)) ; ys[-1].append(float(y))
+			if len(e.strip())>0: # .strip handles potential trailing '\n'
+				ye[-1].append(float(e))
+			else:
+				ye[-1].append(0)
+	return xs,ys,ye,xlabel,ylabel,labels
+
+# WHY ARE WE CODING UP OUR OWN VERSION OF GAUSSIAN BLUR? (instead of using scipy.ndimage.gaussian_filter1d etc)?
+# I like being able to use the same gaussian function (including gaussian definition of beam radius) used for our thermal experiments (see TDTR_fitting.py and FD3D.py)
+def gaussianBlur(data,blurWidth):
+	if len(data)==2:
+		xs,ys=data ; ND=2 ; from scipy.signal import convolve
+	elif len(data)==3:
+		zs,xs,ys=data ; ND=3 ; from scipy.signal import convolve2d
+	def gauss2D(xs,w):
+		return 	np.exp(-2*(xs-np.mean(xs))**2/w**2) # UNITS: W/m²
+	def gauss3D(xs,ys,w):
+		radii=np.sqrt( (xs[None,:]-np.mean(xs))**2+(ys[:,None]-np.mean(ys))**2 )
+		return np.exp(-2*radii**2/w**2)
+	if ND==2:
+		gauss=gauss2D(xs,blurWidth)
+		blurredY=convolve(ys, gauss, mode="same") # BEWARE: padding can help with edge effects. gonna take longer though...
+		#n=len(ys) ; padded=np.zeros(3*n) ; padded[:n]=ys[::-1] ; padded[n:2*n]=ys[:] ; padded[2*n:]=ys[::-1]
+		#blurredY=convolve(padded, gauss, mode="same")
+		#blurredY=blurredY[n:2*n]
+		blurredY *= np.trapz(ys)/np.trapz(blurredY)
+		return blurredY
+	if ND==3:
+		gauss=gauss3D(xs,ys,blurWidth)
+		#blurredZ=convolve2d(zs, gauss, mode='same',boundary='wrap') # BEWARE, wrapping might be inappropriate (left/right edges may not match)
+		ny,nx=np.shape(zs) ; padded=np.zeros((3*ny,3*nx))
+		for i in range(3):
+			for j in range(3):
+				# "unfold" from center tile (edge tiles are reflected. use [::-1] notation to populate with reversed matrix)
+				dx=(i%2)*2-1 ; dy=(j%2)*2-1
+				padded[ j*ny:(j+1)*ny , i*nx:(i+1)*nx ] = zs[ ::dy , ::dx ]
+		#from nicecontour import contour ; contour(padded,np.arange(0,3*nx),np.arange(0,3*ny))
+		blurredZ=convolve2d(padded, gauss, mode='same')
+		blurredZ=blurredZ[ny:2*ny,nx:2*nx]
+		blurredZ *= np.sum(zs)/np.sum(blurredZ)
+		return blurredZ
+
+
+
+
+
+
