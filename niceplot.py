@@ -105,6 +105,7 @@ def plot( xs, ys, xe='', ye='', markers='', labels='', filename='', multiplot=''
 	else:
 		fig,ax=plt.subplots() ; axs.append(ax)
 		
+	ye=list(ye)+[0]*(len(xs)-len(ye)) ; xe=list(xe)+[0]*(len(xs)-len(xe))
 	# PUT THE DATA ON THE PLOT
 	for i in range(len(xs)):
 		x=xs[i] ; y=ys[i] ; ax=axs[0]
@@ -122,9 +123,9 @@ def plot( xs, ys, xe='', ye='', markers='', labels='', filename='', multiplot=''
 
 		# ADD TO PLOT
 		# ERRORBARS: each y entry may have a corresponding ye entry. the ye entry may be:
-		# a) single value - all datapoints in the set get the same sized symmetric error bars
-		# b) list of values - each datapoint receives its own symmetric error bar
-		# c) pair of single values - all datapoint sin the set get the same sized asymettric error bars
+		# a) single value - all datapoints in the set get the same sized symmetric error bars: "10" --> +/-10 for each datapoint
+		# b) list of values - each datapoint receives its own symmetric error bar: [1,2,3,2,4] --> first point +/- 1, second point +/-2 and so on
+		# c) pair of single-value lists: - all datapoints in the set get the same sized asymettric error bars --> [[10],[20]] --> +20,-10 
 		# d) pair of lists - each datapoint receives its own asymmetric error bar
 		# BEWARE: if there are 2 points in a dataset and we receive a pair of ye values: it is undefined whether that intends (b) or (c).
 		#if len(ye)>i:
@@ -141,12 +142,14 @@ def plot( xs, ys, xe='', ye='', markers='', labels='', filename='', multiplot=''
 			"""
 		#	ax.errorbar(xs[i], ys[i], yerr=ye[i], capsize=2, **kw)
 
-		ye=list(ye)+[0]*(len(xs)-len(ye)) ; xe=list(xe)+[0]*(len(xs)-len(xe))
-		if ye[i]!=0 and xe[i]!=0: #len(ye)>i or len(xe)>i:
+		hasYe=(islist(ye[i]) or ye[i]!=0) ; hasXe=(islist(xe[i]) or xe[i]!=0)
+		#print(hasYe,hasXe,ye[i],xe[i])
+
+		if hasYe and hasXe: #len(ye)>i or len(xe)>i:
 			ax.errorbar(xs[i], ys[i], yerr=ye[i], xerr=xe[i], capsize=2, **kw)
-		elif ye[i]!=0:
+		elif hasYe:
 			ax.errorbar(xs[i], ys[i], yerr=ye[i], capsize=2, **kw)
-		elif xe[i]!=0:
+		elif hasXe:
 			ax.errorbar(xs[i], ys[i], xerr=xe[i], capsize=2, **kw)
 		elif "fill" in kw.keys():					# FILL BETWEEN
 			for j in range(i,len(xs)):				# check all other datasets (all after this one!)

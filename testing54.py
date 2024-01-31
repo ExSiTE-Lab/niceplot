@@ -9,9 +9,11 @@ ys=xs**2
 #	axs[0].annotate("A",xy=(xs[10],ys[10]),xytext=(xs[10],ys[10]+10),arrowprops={"facecolor":"black"})
 #plot([xs,xs[10:],xs[:15]],[ys,ys[10:]/2,ys[:15]/3],markers=['k.','bo','r.'],title="annotations",xlabel="x values",ylabel="TBC (W m^-2 K^-1)",labels=["A","B","C"],extras=[ano])
 
-plot([xs,xs+.1,xs+.3],[ys,ys/2,ys/4],ye=[10,np.random.random(20)*10,[np.random.random(20)*5,np.random.random(20)*10]],title="error bars, mixed, asymmetric",labels=["uniform","point-by-point","point-by-point, asymmetric"]) ; sys.exit()
+plot([xs,xs+.1,xs+.3],[ys,ys/2,ys/4],ye=[10,np.random.random(20)*10,[np.random.random(20)*5,np.random.random(20)*10]],title="error bars, mixed, asymmetric",labels=["uniform","point-by-point","point-by-point, asymmetric"]) #; sys.exit()
 
-plot([xs,xs+.1,xs+.2,xs+.3],[ys,ys/2,ys/3,ys/4],ye=[10,np.random.random(20)*10,[10,20],[np.random.random(20)*5,np.random.random(20)*10]],title="error bars, mixed, asymmetric",labels=["uniform","point-by-point","uniform, asymmetric","point-by-point, asymmetric"]) #; sys.exit()
+plot([xs,xs+.1,xs+.2,xs+.3],[ys,ys/2,ys/3,ys/4],ye=[10,np.random.random(20)*10,[[10],[20]],[np.random.random(20)*5,np.random.random(20)*10]],title="error bars, mixed, asymmetric",labels=["uniform","point-by-point","uniform, asymmetric","point-by-point, asymmetric"]) #; sys.exit()
+
+plot([xs],[ys],xe=[2],ye=[10],title="horizontal and vertical error bars")
 
 #xs=np.asarray([0,1]) ; ys=np.random.random(2) ; ye=[1,[1,.5],[[1,1],[.5,.5]]]
 #plot([xs,xs+.1,xs+.2],[ys,ys*2,ys*3],ye=ye,title="error bars, CHECK OUR WARNING") ; sys.exit()
