@@ -44,7 +44,9 @@ markerSize = defaultMarkerSize ; lineWidth = defaultLineWidth
 # ASK MATPLOTLIB WHAT MARKERS/LINESTYLES/COLOR SHORTCUTS ARE AVAILABLE
 standardOptions={ "markers" : list(matplotlib.markers.MarkerStyle.markers.keys()) ,
 		"linestyles" : list(matplotlib.lines.lineStyles.keys()) ,
-		"colors" : list(matplotlib._color_data.BASE_COLORS.keys())+list(matplotlib._color_data.TABLEAU_COLORS.keys()) }
+		"colors" : list(matplotlib._color_data.BASE_COLORS.keys())+list(matplotlib._color_data.TABLEAU_COLORS.keys())+list(matplotlib.colors.CSS4_COLORS.keys()) }
+
+#print(standardOptions)
 
 # plot() is a basic wrapper for the likes of: "plt.plot(...);plt.xlabel(...);...
 #  ;plt.show() or plt.savefig() etc". It also takes advantage of as many 
@@ -96,6 +98,10 @@ def plot( xs, ys, xe='', ye='', markers='', labels='', filename='', multiplot=''
 		#data=
 		#numpy.savetxt(kwargs["filename"], , delimiter=",")
 
+	if "cmap" in kwargs.keys():
+		global cmap
+		cmap=kwargs["cmap"]
+
 	global axs,frames,fig,markerSize,lineWidth ; axs=[] ; frames=[]
 	lineWidth = kwargs.get("lw", defaultLineWidth) ; markerSize = kwargs.get("ms", defaultMarkerSize);
 	
@@ -114,6 +120,7 @@ def plot( xs, ys, xe='', ye='', markers='', labels='', filename='', multiplot=''
 		# PROCESS MARKERS
 		if len(markers)>i:
 			kw=handleMarkers(markers[i]) # turns marker strings into a dict to pass to each plot function
+			#print("kw",markers[i],"-->",kw)
 		else:
 			kw={"linestyle":'',"markersize":markerSize}
 		# LABELS (for legend) ALSO GO IN KWARGS
@@ -142,8 +149,11 @@ def plot( xs, ys, xe='', ye='', markers='', labels='', filename='', multiplot=''
 			"""
 		#	ax.errorbar(xs[i], ys[i], yerr=ye[i], capsize=2, **kw)
 
+
 		hasYe=(islist(ye[i]) or ye[i]!=0) ; hasXe=(islist(xe[i]) or xe[i]!=0)
 		#print(hasYe,hasXe,ye[i],xe[i])
+
+		#print("niceplot",i,xs[i],ys[i],xe[i],ye[i])
 
 		if hasYe and hasXe: #len(ye)>i or len(xe)>i:
 			ax.errorbar(xs[i], ys[i], yerr=ye[i], xerr=xe[i], capsize=2, **kw)
@@ -206,6 +216,9 @@ def plot( xs, ys, xe='', ye='', markers='', labels='', filename='', multiplot=''
 		ax.set_xscale( kwargs.get("xscale","linear") )
 		ax.set_yscale( kwargs.get("yscale","linear") )
 	setFace( kwargs.get("facecolor","white") )
+	if "minorticks" in kwargs.keys():
+		if kwargs["minorticks"]:
+			plt.minorticks_on()
 	if "figsize" in kwargs.keys():				# most are okay receiving None, except for set_size_inches
 		fig.set_size_inches( kwargs.get("figsize") )
 	if "fontsize" in kwargs.keys(): # https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot

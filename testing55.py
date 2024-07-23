@@ -6,6 +6,14 @@ ys=np.linspace(-10,10,100)
 zs=xs[None,:]**2-10*np.sin(ys[:,None])
 
 
+Z=np.zeros((len(ys),len(xs),4)) # colormap object: pix-y, pix-x, [R,G,B,A]
+Z[:,:,:]+=matplotlib.cm.Reds(np.sin(xs[:,None])/2) # each element gets a color
+Z[:,:,:]+=matplotlib.cm.Blues(np.cos(ys[None,:])/2)
+radii=np.sqrt(xs[:,None]**2+ys[None,:]**2)
+Z[:,:,:]+=matplotlib.cm.Greens(np.exp(-2*(radii)**2/5**2)) # gaussian with radius of 10
+Z/=3
+contour(Z,xs,ys,heatOrContour="pix",title="transparent 3 channel")
+
 # DATASET TESTING: 
 # RAGGED Z (list of lists, different-length rows), RAGGED X (list of lists, one list for each row), 1D Y (positioning of each row)
 zs=[[0,1,3,2,4],[2,3,5,4,3,6],[2,3,4,4],[1,2,3],[3,4,5,6,7,1]]

@@ -9,6 +9,8 @@ ys=xs**2
 #	axs[0].annotate("A",xy=(xs[10],ys[10]),xytext=(xs[10],ys[10]+10),arrowprops={"facecolor":"black"})
 #plot([xs,xs[10:],xs[:15]],[ys,ys[10:]/2,ys[:15]/3],markers=['k.','bo','r.'],title="annotations",xlabel="x values",ylabel="TBC (W m^-2 K^-1)",labels=["A","B","C"],extras=[ano])
 
+plot([xs[10:],xs[10:],xs[10:]],[ys[10:]*.7,ys[10:],ys[10:]/2],markers=["r","b","g"],title="minorticks = True",xlabel="X",ylabel="Y",minorticks=True)
+
 plot([xs,xs+.1,xs+.3],[ys,ys/2,ys/4],ye=[10,np.random.random(20)*10,[np.random.random(20)*5,np.random.random(20)*10]],title="error bars, mixed, asymmetric",labels=["uniform","point-by-point","point-by-point, asymmetric"]) #; sys.exit()
 
 plot([xs,xs+.1,xs+.2,xs+.3],[ys,ys/2,ys/3,ys/4],ye=[10,np.random.random(20)*10,[[10],[20]],[np.random.random(20)*5,np.random.random(20)*10]],title="error bars, mixed, asymmetric",labels=["uniform","point-by-point","uniform, asymmetric","point-by-point, asymmetric"]) #; sys.exit()
@@ -42,7 +44,8 @@ Xs,Ys,Ye,XLB,YLB,DLBS=readCSV("testing54.csv")
 #plot([xs,xs],[ys,ys/2],markers=['r'],title="red, defaulted, saved not shown",labels=["wow","oh no"],filename="out.png")
 #plot([xs],[ys],markers=['ko'],title="black o",yscale="log")
 #plot([xs,xs],[ys,ys/2],markers=['k-','b.'],title="black line, blue dots",lw=7)
-plot([xs[10:],xs[10:]],[ys[10:],ys[10:]/2],markers=['k,f0','k,f0'],title="black filled",xlabel="X",ylabel="Y")
+plot([xs[10:],xs[10:],xs[10:]],[ys[10:]*.7,ys[10:],ys[10:]/2],markers=["g",'k,f0','k,f0'],title="black filled",xlabel="X",ylabel="Y")
+#plot([xs[10:],xs[10:]],[ys[10:],ys[10:]/2],markers=['k,f0','k,f0'],title="black filled",xlabel="X",ylabel="Y")
 #plot([xs[10:],xs[10:]],[ys[10:],ys[10:]/2],markers=['g,fA','g,fA'],title="how do those units look?",xlabel="X",ylabel="TBC (W m^-2 K^-1)",xlim=[None,35])
 plot([xs[10:],xs[10:]],[ys[10:],ys[10:]/2],markers=['tab:blue,f0','00,f0'],title="blue filled,logx",xlabel="X",ylabel="TBC (W m^-2 K^-1)",xscale="log")
 plot([xs],[ys],markers=['tab:orange'],title="orange default sym",ms=25)

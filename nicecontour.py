@@ -48,6 +48,8 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 
 
 	if np.amin(zvals)==np.amax(zvals):
+		print("nicecontour: bad z bounds. exiting")
+		print(np.amin(zvals),np.amax(zvals))
 		return
 	# if we're saving files, use the "Agg" backend. (and save off whatever the current backend is, and restore it after we save it, to prevent messing up the user's python environment). if we're showing, just default to whatever the user's default is
 	#print(xvals,yvals,len(xvals),len(yvals),np.shape(zvals))
@@ -79,8 +81,16 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 	#	matplotlib.use("TkAgg") # https://stackoverflow.com/questions/56656777/userwarning-matplotlib-is-currently-using-agg-which-is-a-non-gui-backend-so
 	#else:
 	#	matplotlib.use("Agg") # https://stackoverflow.com/questions/31156578/matplotlib-doesnt-release-memory-after-savefig-and-close
-
 	LB,UB=np.nanmin(zvals),np.nanmax(zvals)
+	if "xlim" in kwargs.keys() or "ylim" in kwargs.keys():
+		mask=np.ones(np.shape(zvals))
+		xlim=kwargs.get("xlim",[min(xvals),max(xvals)])
+		ylim=kwargs.get("ylim",[min(yvals),max(yvals)])
+		mask[:,xvals<xlim[0]]=0 ; mask[:,xvals>xlim[1]]=0
+		mask[yvals<ylim[0],:]=0 ; mask[yvals>ylim[1],:]=0
+		cropped=zvals[mask==1]
+		LB,UB=np.nanmin(cropped),np.nanmax(cropped)
+
 	if "zlim" in kwargs.keys():
 		zlim=kwargs["zlim"] ; LB={True:LB,False:zlim[0]}[zlim[0] is None] ; UB={True:UB,False:zlim[1]}[zlim[1] is None]
 	nticks=kwargs.get("nticks",10)
@@ -134,7 +144,14 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 		#plt.show()
 	if heatOrContour in ["pix"]: # shows unsmoothed raw data as pixels. creates substantially smaller svg files too! 
 		print(np.shape(zvals))
-		plt.imshow(zvals,extent=(min(xvals),max(xvals),min(yvals),max(yvals)),cmap=kwargs.get("cmap",defaultcmap),aspect="auto")
+		aspect=kwargs.get("aspect","auto")
+		if yvals[0]<yvals[1]:		# BEWARE: imshow displays with origin in upper-left. and imshow takes extent, not the actual
+			zvals=zvals[::-1,:]	# col-by-col and row-by-row values. So if you have ascending yvals or descending xvals, heat or 
+		if xvals[0]>xvals[1]:		# contour modes would be correct, but the pix map would be flipped. so we need to manually
+			zvals=zvals[:,::-1]	# detect and flip zvals as appropriate
+		zvals[zvals<LB]=np.nan ; zvals[zvals>UB]=np.nan
+		
+		plt.imshow(zvals,extent=(min(xvals),max(xvals),min(yvals),max(yvals)),cmap=kwargs.get("cmap",defaultcmap),aspect=aspect)
 	if useLast:
 		print(CS.collections)
 
@@ -171,7 +188,6 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 
 	for extra in extras:
 		extra(plt)
-
 	if len(filename)>0:
 		if ".svg" in filename:
 			matplotlib.rc("svg", **{'fonttype':'none'}) # ensures text in svg files is saved as text (for later editing)
@@ -252,6 +268,17 @@ def unbendZs(Zs,xs,ys,axis="xy",saveframes=""):
 				plot([xs,xs],[Znew[j,:],quad(xs,*parm)],filename=saveframes+"x_"+str(j)+".png")
 			Znew[j,:]-=quad(xs,*parm)
 	return Znew
+
+def interp(Zs,x,y,nx,ny=0,method='cubic'):
+	if ny==0:
+		ny=nx
+	from scipy.interpolate import RegularGridInterpolator
+	interp=RegularGridInterpolator((y,x),Zs,method=method)
+	xs=np.linspace(min(x),max(x),nx) ; ys=np.linspace(min(y),max(y),ny)
+	ym,xm=np.meshgrid(ys,xs)
+	interpolated=interp((ym,xm)) # idk how, but somehow through interpolation, our indices get switched. 
+	return interpolated.T,xs,ys
+
 
 def getContObjs():
 	#print(id(ax),id(fig),id(plt)) # from gui.py > TDTR_fitting.py, plt ends up being shared between niceplot.py and nicecontour.py
