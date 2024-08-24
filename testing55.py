@@ -5,14 +5,27 @@ xs=np.linspace(-10,10,100)
 ys=np.linspace(-10,10,100)
 zs=xs[None,:]**2-10*np.sin(ys[:,None])
 
+#radii=np.sqrt(xs[:,None]**2+ys[None,:]**2)
+#Z=[ np.sin(xs[None,:])/2*np.ones(len(ys))[:,None] , np.cos(ys[:,None])/2*np.ones(len(xs))[None,:] , np.exp(-2*(radii)**2/5**2) ]
+#contour(ZNChannel(Z),xs,ys,heatOrContour="pix",title="transparent 3 channel")
 
-Z=np.zeros((len(ys),len(xs),4)) # colormap object: pix-y, pix-x, [R,G,B,A]
-Z[:,:,:]+=matplotlib.cm.Reds(np.sin(xs[:,None])/2) # each element gets a color
-Z[:,:,:]+=matplotlib.cm.Blues(np.cos(ys[None,:])/2)
-radii=np.sqrt(xs[:,None]**2+ys[None,:]**2)
-Z[:,:,:]+=matplotlib.cm.Greens(np.exp(-2*(radii)**2/5**2)) # gaussian with radius of 10
-Z/=3
-contour(Z,xs,ys,heatOrContour="pix",title="transparent 3 channel")
+x=xs[None,:]*np.ones(100)[:,None] ; y=ys[:,None]*np.ones(100)[None,:]
+z=colorwheel(x,y)
+contour(z,xs,ys,heatOrContour="pix",title="colorwheel preview")
+
+
+#Z=1-np.absolute(ys[:,None]-np.sin(xs[None,:]))
+z_sin=np.exp(-2*(ys[:,None]-np.sin(xs[None,:]))**2/2**2)
+z_cos=np.exp(-2*(xs[None,:]-np.cos(ys[:,None]))**2/2**2)
+z_quad=np.exp(-2*(ys[:,None]-xs[None,:]**2)**2/3**2)
+z_circ=np.exp(-2*(5**2-ys[:,None]**2-xs[None,:]**2)**2/8**2)
+#contour(roygbvr(z_sin),xs,ys,heatOrContour="pix")
+contour(ZNChannel([z_sin,z_cos,z_quad,z_circ]),xs,ys,heatOrContour="pix",title="ZNChannel")
+contour(Z3ChannelRGB([z_sin,z_cos,z_quad]),xs,ys,heatOrContour="pix",title="Z3ChannelRGB")
+contour(Z3Channel([z_sin,z_cos,z_quad]),xs,ys,heatOrContour="pix",title="Z3Channel")
+contour(Z3Channel([z_sin,z_cos,z_quad]),xs,ys,heatOrContour="pix",title="Z3Channel, invert",extras=[invertContourColors])
+#contour(z_sin,xs,ys,heatOrContour="pix",cmap="turbo")
+#contour(z_cos,xs,ys,heatOrContour="pix",cmap="rainbow",useLast=True)
 
 # DATASET TESTING: 
 # RAGGED Z (list of lists, different-length rows), RAGGED X (list of lists, one list for each row), 1D Y (positioning of each row)
