@@ -120,6 +120,7 @@ def plot( xs, ys, xe='', ye='', markers='', labels='', filename='', multiplot=''
 		# PROCESS MARKERS
 		if len(markers)>i:
 			kw=handleMarkers(markers[i]) # turns marker strings into a dict to pass to each plot function
+			#print(kw)
 			#print("kw",markers[i],"-->",kw)
 		else:
 			kw={"linestyle":'',"markersize":markerSize}
@@ -182,6 +183,8 @@ def plot( xs, ys, xe='', ye='', markers='', labels='', filename='', multiplot=''
 	for i,ax in enumerate(axs):
 		for key,getter,setter in zip(["ylim","xlim"],[ax.get_ylim,ax.get_xlim],[ax.set_ylim,ax.set_xlim]):
 			passedlims=kwargs.get(key,[None,None]) ; curlims=list(getter()) ; scale=kwargs.get(key[0]+"scale","linear")
+			if passedlims[0] is not None and isinstance(passedlims[0],list): # is using multiplot, we should allow both lims for axes!
+				passedlims=passedlims[i]
 			# rule: linear plots should include zero (don't "cheat" by zooming into only slightly-varying data!). this is overridable by including "nonzero" in the lims passed, OR, by specifying actual values 
 			if scale=="linear" and "nonzero" not in passedlims: # read in existing limits, check if zero is outside their bounds
 				curlims.append(0) ; curlims=[min(curlims),max(curlims)] ; setter(curlims)
@@ -198,14 +201,18 @@ def plot( xs, ys, xe='', ye='', markers='', labels='', filename='', multiplot=''
 	#	xlim=list(axs[0].get_xlim()) ; xlim.append(0) ; xlim=[min(xlim),max(xlim)] ; axs[0].set_xlim(xlim)
 	#if kwargs.get("yscale","linear")!="log" and "nonzero" not in kwargs.get("ylim",["",""]):
 	#	ylim=list(axs[0].get_ylim()) ; ylim.append(0) ; ylim=[min(ylim),max(ylim)] ; axs[0].set_ylim(ylim)
-
-		ax.set_title( processText( kwargs.get("title","TITLE") ) ) # get "title" kw from kwargs, defaulting to "title". pass through
-		ax.set_xlabel( processText( kwargs.get("xlabel","XLABEL") ) ) # processText, then set as title. and so on for xlabel,ylabel
+		title=kwargs.get("title","TITLE")
+		if isinstance(title,list):
+			title=title[i]
+		ax.set_title( processText( title ) ) # get "title" kw from kwargs, defaulting to "title". pass through
+		xlb=kwargs.get("xlabel","XLABEL")
+		if isinstance(xlb,list):
+			xlb=xlb[i]
+		ax.set_xlabel( processText( xlb ) ) # processText, then set as title. and so on for xlabel,ylabel
 		ylb=kwargs.get("ylabel","YLABEL")
 		if isinstance(ylb,list):
-			ax.set_ylabel( processText(ylb[i]) )
-		else:
-			ax.set_ylabel( processText(ylb) )	
+			ylb=ylb[i]
+		ax.set_ylabel( processText(ylb) )	
 		#ax.set_ylabel( processText( kwargs.get("ylabel","YLABEL") ) ) 
 		#if "xlim" in kwargs.keys():
 		#	axs[0].set_xlim( kwargs.get("xlim") )
@@ -279,7 +286,6 @@ def islist(val): # WHY? if val is a numpy array, then isinstance(val,list) will 
 
 # lots of valid options for markers: "k" (black, default in a symbol), "k-" (black line, mpl standard), "k,-" (comma-separated), "tab:blue" (blue, default in a symbol), "tab:blue,-" (blue line), "o" (default in the color, o symbol), "-" (defailt in the color, line symbol)
 def handleMarkers(m):
-	#print("m",m)
 	kw={}
 	#m=markers[i]
 	if isinstance(m,str):
@@ -311,6 +317,7 @@ def handleMarkers(m):
 					break
 			else:						# 2 DIGIT COLOR INSTEAD OF SHORTCUT CODE
 				kw["color"]=float2rgb(int(c)/100)
+		#print("m",m,"kw",kw)
 		return kw
 	return m
 
