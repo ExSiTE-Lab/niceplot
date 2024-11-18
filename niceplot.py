@@ -1,3 +1,15 @@
+# RULES FOR PLOTTING:
+# 1. plots must be generated in origin or matlab
+# 2. Axes must be labeled with both title and unit
+# 3. Border must appear on all edges of plot area
+# 4. ticks must be set to "in"
+# 5. the same font style (Arial) and sizes must be used for plot labels, units, tick number labels
+# 6. the values of the ticks at the beginning and end of axes must be clearly labeled. "reasonable and legible" tick number labels must be chosen for ticks.
+# 7. if linear scale, the axis values must start at (or span across) zero
+# 8. all data and labels must be legible when printed in black and white. symbols should be clearly differentiable, legends should be clear and discernible from data being presented, data should be easily interpretable.
+# HOW DO WE ADDRESS EACH?
+# 1 is flagrantly ignored. 2 is encouraged by giving the user dummy labels which should be in obvious need of attention. 3,4,5,6 are handled via rcparams (tick location, direction, font, autolimit_mode). 7 is handled via a manual set_xlim set_ylim right before incorporating kwargs. 8 is addressed in part by sensible (but not always universally correct) default color/marker/linestyle choices.
+
 import matplotlib, os
 import matplotlib.pyplot as plt  # https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.html
 import numpy as np
@@ -6,15 +18,15 @@ from cycler import cycler
 # THESE ARE ALL YOUR USER-CONFIGURABLE SETTINGS.
 # WHAT DEFAULT COLORS AND SYMBOLS DO YOU WANT TO ROTATE THROUGH? WHAT COLORMAP DO YOU WANT INTEGER COLOR VALUES TO REFER TO?
 defCols = ["k", "g", "b", "r"]
-defMark = ["o", "^", "s", "P", "d", "X", "v", "+", "x"]
+defMark = ["o", "^", "s", "P", "d", "X", "v", "+", "x", '*', 'p', 'D']
 defaultMarkerSize = 10
 defaultLineWidth = 3
-cycle = cycler(color=defCols * len(defMark)) + cycler(
-    marker=defMark * len(defCols)
-)  # https://github.com/matplotlib/cycler/issues/41
+cycle = cycler( color=defCols * len(defMark) ) +\
+        cycler( marker=defMark * len(defCols) )  # https://github.com/matplotlib/cycler/issues/41
 # cmap=matplotlib.cm.inferno
 # cmap=matplotlib.cm.rainbow
 cmap = matplotlib.cm.plasma
+
 # WHAT GLOBAL TICK, AXIS, FONT SETTINGS DO YOU WANT?
 params = {
     "xtick": {
@@ -62,10 +74,8 @@ params = {
     "mathtext": {"default": "regular"},
 }
 
-
 def setPlotRC(key, para):
     matplotlib.rc(key, **para)
-
 
 for key in params:
     setPlotRC(key, params[key])  # replaces "matplotlib.rc(key, **params[key])"
@@ -73,16 +83,13 @@ for key in params:
 markerSize = defaultMarkerSize
 lineWidth = defaultLineWidth
 
-# RULES FOR PLOTTING:
-# 1. plots must be generated in origin or matlab
-# 2. Axes must be labeled with both title and unit
-# 3. Border must appear on all edges of plot area
-# 4. ticks must be set to "in"
-# 5. the same font style (Arial) and sizes must be used for plot labels, units, tick number labels
-# 6. the values of the ticks at the beginning and end of axes must be clearly labeled. "reasonable and legible" tick number labels must be chosen for ticks.
-# 7. if linear scale, the axis values must start at (or span across) zero
-# 8. all data and labels must be legible when printed in black and white. symbols should be clearly differentiable, legends should be clear and discernible from data being presented, data should be easily interpretable.
-# Answers: 2 is encouraged by giving the user dummy labels which should be in obvious need of attention. 3,4,5,6 are handled via rcparams (tick location, direction, font, autolimit_mode). 7 is handled via a manual set_xlim set_ylim right before incorporating kwargs. 8 is addressed in part by sensible default color/marker/linestyle choices.
+# ASK MATPLOTLIB WHAT MARKERS/LINESTYLES/COLOR SHORTCUTS ARE AVAILABLE
+standardOptions = {
+    "markers": list(matplotlib.markers.MarkerStyle.markers.keys()),
+    "linestyles": list(matplotlib.lines.lineStyles.keys()),
+    "colors": list(matplotlib._color_data.BASE_COLORS.keys())
+            + list(matplotlib._color_data.TABLEAU_COLORS.keys()),
+}
 
 # ASK MATPLOTLIB WHAT MARKERS/LINESTYLES/COLOR SHORTCUTS ARE AVAILABLE
 standardOptions = {
@@ -92,66 +99,60 @@ standardOptions = {
     + list(matplotlib._color_data.TABLEAU_COLORS.keys()),
 }
 
-
 # plot() is a basic wrapper for the likes of: "plt.plot(...);plt.xlabel(...);...
-# Answers: 2 is encouraged by giving the user dummy labels which should be in obvious need of attention. 3,4,5,6 are handled via rcparams (tick location, direction, font, autolimit_mode). 7 is handled via a manual set_xlim set_ylim right before incorporating kwargs. 8 is addressed in part by sensible default color/marker/linestyle choices.
-
-# ASK MATPLOTLIB WHAT MARKERS/LINESTYLES/COLOR SHORTCUTS ARE AVAILABLE
-standardOptions = {
-    "markers": list(matplotlib.markers.MarkerStyle.markers.keys()),
-    "linestyles": list(matplotlib.lines.lineStyles.keys()),
-    "colors": list(matplotlib._color_data.BASE_COLORS.keys())
-    + list(matplotlib._color_data.TABLEAU_COLORS.keys()),
-}
-
-
-# plot() is a basic wrapper for the likes of: "plt.plot(...);plt.xlabel(...);...
-#  ;plt.show() or plt.savefig() etc". It also takes advantage of as many
-#  rcparams as possible to adhere to the rules for plotting, and takes
-#  matplotlib rcparams as optional arguments to pass in.
+#   ;plt.show() or plt.savefig() etc". It also takes advantage of as many
+#   rcparams as possible to adhere to the rules for plotting, and takes
+#   matplotlib rcparams as optional arguments to pass in.
 # Arguments:
-# xs - a 2D list of x values: list of datasets, each dataset it itself a list
-# ys - a 2D list of y values
-# ye - a list matching ys: error value(s) for each dataset may be list or float
-# markers - a 1D list describing how each dataset should be plotted.
-# piece 1 denotes color: may be a standard color code (https://matplotlib.
-# org/2.1.1/api/_as_gen/matplotlib.pyplot.plot.html), or a 2 digit int
-# from 00-99 (see float2rgb(c) below).
-# piece 2 denotes form: may be a marker symbol (https://matplotlib.org/sta
-# ble/api/markers_api.html), or a linestyle symbol https://matplotlib.or
-# g/stable/gallery/lines_bars_and_markers/linestyles.html, OR, "fN"
-# where N denotes that we're to fill between this and another dataset.
-# if 2-character colors or 2-character form is used, separate with comma
-# examples: "ko" is a black o. "b-" is a blue line. "00f0" denotes a red
-# band will be filled in between this dataset and another which also has
-# "f0". tab:blue,o"
-# hidden feature for markers: you can also pass a list with dicts, and
-# we'll just pass the dict into the plot functions (plot, errorbar,
-# fill_between) as kwargs. you'll need to manually set things like
-# "color":"red", but you'll also be able to include bonus parameters
-# like linewidth, markersize, alpha, etc.
-# filename - if a filename is provided, we'll save the plot instead of showing
-# multiplot - 3 methods: split (two plots side-by-side sharing a y axis),
-#  stacked (two plot one-above-another sharing x axis), shared (one plot with a
-#  shared x axis and 2 y axes). pass a tuple: (method,[indicesList]) where
-#  indicesList is a list of which dataset (xs,ys) goes on which plot
+# xs - a 2D list of x values: list of datasets, each dataset is itself a list
+# ys - a 2D list of y values (matching length (and each list's length) to xs)
+# xlabel - label to place on the x axis. if none is given, "XLABEL" will be 
+#   used. you can pass xlabel="" to suppress the defaulting if you truly do not 
+#   want a label
+# ylabel - label to place on the y axis (same rules as xlabel)
+# title - title placed above the plot. (same rules as xlabel and ylabel)
+# labels - entries for the legend. if you don't pass a value, we'll default it
+#   as "dataset [n]". pass empty list entry ("") if you really don't want it.
+# xe/ye - [optional] list matching xs/ys: error value(s) may be a list or float
+# markers - [optional] a 1D list describing how each dataset should be plotted.
+#   each entry contains two parts (often comma-delimited): color,form
+#   piece 1 denotes color: may be a standard color code (https://matplotlib.
+#       org/2.1.1/api/_as_gen/matplotlib.pyplot.plot.html), or a 2 digit int
+#       from 00-99 (see float2rgb(c) below).
+#   piece 2 denotes form: may be a marker symbol (https://matplotlib.org/sta
+#       ble/api/markers_api.html), or a linestyle symbol https://matplotlib.or
+#       g/stable/gallery/lines_bars_and_markers/linestyles.html, OR, "fN"
+#       where N denotes that we're to fill between this and another dataset.
+#   if 2-character colors or 2-character form is used, separate with comma
+#   markers examples: "ko" is a black 'o' (large dot). "b-" is a blue line. 
+#       "00f0" denotes a red band will be filled in between this dataset and 
+#       another which also has "f0". tab:blue,o" is a blue dot
+#   hidden feature for markers: you can also pass a list with dicts, and
+#       we'll just pass the dict into the plot functions (plot, errorbar,
+#       fill_between) as kwargs. you'll need to manually set things like
+#       "color":"red", but you'll also be able to include bonus parameters
+#       like linewidth, markersize, alpha, etc.
+# filename - [optional] if provided, we'll save the plot instead of showing it
+# Additonal Arguments Allowed through kwargs:
+# multiplot - a dict denoting construction of multi-panel figures.
+#   "method":"stacked" - two plot one-above-another sharing x axis
+#   "method":"shared" - one plot with a shared x axis and 2 y axes
+#   "method":"split" - two plots side-by-side sharing a y axis
+#   "indiced":[list] - a list of which dataset (xs,ys) goes on which plot
+# extras - a list of functions which we'll pass axs,figs (you can do a lot of
+#   whacky and wild stuff with this. e.g. annotations can be added by creating
+#   a function which calls ax.annotate etc)
+# minorticks - set to False to force minorticks off
+# xscale/yscale - "linear" or "log"
+# figsize, fontsize, facecolor, cmap, lw (linewidth), xlim, ylim, ms (markersize)
+# 
 # Notes on expectations: function can handle basic plotting of points (ax.plot,
-#  marker args, etc), lines (linestyle args), errorbars (ax.errorbar, with both
-#  marker or linestyle args), and fill_between (you can plot shaded error bands
-#  by passing a pair of datasets, y+ye and y-ye, and filling between them).
-def plot(
-    xs,
-    ys,
-    xe="",
-    ye="",
-    markers="",
-    labels="",
-    filename="",
-    multiplot="",
-    fontsize="",
-    extras=[],
-    **kwargs,
-):
+#   marker args, etc), lines (linestyle args), errorbars (ax.errorbar, with both
+#   marker or linestyle args), and fill_between (you can plot shaded error bands
+#   by passing a pair of datasets, y+ye and y-ye, and filling between them).
+#   some level of user-awareness is of course required. proofread your plots
+#   before sending them to bossman! if you do 
+def plot( xs, ys, xe="", ye="", markers="", labels="", filename="", **kwargs ):
     # if we're saving files, use the "Agg" backend. (if you don't, saving off, say, a thousand or so plots will fill up your memory, as some backends suck at garbage collection: https://stackoverflow.com/questions/31156578/matplotlib-doesnt-release-memory-after-savefig-and-close ). So we'll save off whatever the current backend is, and restore it after we save it, to prevent messing up the user's python environment. if we're showing, just default to whatever the user's default is. (other useful links: https://stackoverflow.com/questions/56656777/userwarning-matplotlib-is-currently-using-agg-which-is-a-non-gui-backend-so , https://stackoverflow.com/questions/55811545/importerror-cannot-load-backend-tkagg-which-requires-the-tk-interactive-fra )
 
     if ".csv" in filename:
@@ -173,12 +174,21 @@ def plot(
         # data=
         # numpy.savetxt(kwargs["filename"], , delimiter=",")
 
+    if "cmap" in kwargs.keys():
+        global cmap
+        cmap=kwargs["cmap"]
+        if isinstance(cmap,str):
+            cmap=eval("matplotlib.cm."+cmap)
+
+
+
     global axs, frames, fig, markerSize, lineWidth
     axs = []
     frames = []
-    lineWidth = kwargs.get("lw", defaultLineWidth)
-    markerSize = kwargs.get("ms", defaultMarkerSize)
+    lineWidth = kwargs.get("lw", kwargs.get("linewidth",defaultLineWidth))
+    markerSize = kwargs.get("ms", kwargs.get("markersize",defaultMarkerSize))
     # CREATE THE PLOT OBJECTS
+    multiplot=kwargs.get("multiplot",[])
     if len(multiplot) > 0:
         axs, fig = genMultiAx(**multiplot)
     else:
@@ -217,15 +227,15 @@ def plot(
             # if len(ye)>i:
             # print("YERROR:",ye[i])
             """
-			if islist(ye[i]) and len(ye[i])==2 and len(ys[i])==2 and not islist(ye[i][0]):
-				print("WARNING FOR ERROR SET "+str(i)+": if a y error entry has length==2 AND the dataset itself has length==2: it is unclear if the user intends for: each datapoint receives a symmetric error bar, OR, the full dataset receives asymmetric error bars (same for each point). if you desire the latter (or wish to suppress this error, please fully-define a 2x2 matrix: [lowerboundslist,upperboundslist]. WE WILL ASSUME YOU MEAN POINT-SPECIFIC, NOT ASYMETRIC")
-				ye[i]=np.asarray(ye[i])[None,:]*np.ones(2)[:,None]
-			if islist(ye[i]) and len(ye[i])==2:
-				if islist(ye[i][0]):
-					ye[i]=np.asarray(ye[i])
-				else:
-					ye[i]=np.asarray(ye[i]).reshape((2,1))
-			"""
+            if islist(ye[i]) and len(ye[i])==2 and len(ys[i])==2 and not islist(ye[i][0]):
+                print("WARNING FOR ERROR SET "+str(i)+": if a y error entry has length==2 AND the dataset itself has length==2: it is unclear if the user intends for: each datapoint receives a symmetric error bar, OR, the full dataset receives asymmetric error bars (same for each point). if you desire the latter (or wish to suppress this error, please fully-define a 2x2 matrix: [lowerboundslist,upperboundslist]. WE WILL ASSUME YOU MEAN POINT-SPECIFIC, NOT ASYMETRIC")
+                ye[i]=np.asarray(ye[i])[None,:]*np.ones(2)[:,None]
+            if islist(ye[i]) and len(ye[i])==2:
+                if islist(ye[i][0]):
+                    ye[i]=np.asarray(ye[i])
+                else:
+                    ye[i]=np.asarray(ye[i]).reshape((2,1))
+            """
         # ax.errorbar(xs[i], ys[i], yerr=ye[i], capsize=2, **kw)
 
         hasYe = islist(ye[i]) or ye[i] != 0
@@ -315,10 +325,9 @@ def plot(
         ax.set_xscale(kwargs.get("xscale", "linear"))
         ax.set_yscale(kwargs.get("yscale", "linear"))
 
-        ax.minorticks_on()
-
-        if "minorticks" in kwargs.keys():
-            ax.minorticks_off()
+        minorticks=kwargs.get("minorticks",True)
+        if minorticks:
+            ax.minorticks_on()
         if kwargs.get("xscale") != "log":
             ax.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(nbins=5))
         if kwargs.get("yscale") != "log":
@@ -359,8 +368,8 @@ def plot(
         # item.set_fontsize( kwargs.get("fontsize"))
 
     #'font':{'family':'arial', 'weight':'regular' , 'size':16}
-    # key	   set function   default val,  pre-function
-    # funcLookup={ 	"title" : (axs[0].set_title , "TITLE" , processText) ,
+    # key       set function   default val,  pre-function
+    # funcLookup={     "title" : (axs[0].set_title , "TITLE" , processText) ,
     # "xlabel": (axs[0].set_xlabel, "XLABEL", processText) ,
     # "ylabel": (axs[0].set_ylabel, "YLABEL", processText) ,
     # "xlim"  : (axs[0].set_xlim  , None    , None       ) ,
@@ -370,15 +379,15 @@ def plot(
     # "facecolor": (setFace       , "white" , None       ) ,
     # "figsize": (fig.set_size_inches, None , None       ) }
     #
-    # for k in funcLookup.keys():		# for every allowed funct/arg
+    # for k in funcLookup.keys():        # for every allowed funct/arg
     # f,d,f2=funcLookup[k]
-    # if k in kwargs.keys():		# if the user passed it, override the default with that
+    # if k in kwargs.keys():        # if the user passed it, override the default with that
     # d=kwargs[k]
-    # if d is not None:		# if there's a value, set it
+    # if d is not None:        # if there's a value, set it
     # if f2 is not None:
     # d=f2(d)
-    # f(d)			# replaces things like "ax.set_title(value)"
-
+    # f(d)            # replaces things like "ax.set_title(value)"
+    extras=kwargs.get("extras",[])
     for extra in extras:
         extra(axs, fig)
     if "addcbar" in kwargs.keys():
@@ -449,7 +458,7 @@ def handleMarkers(m):
         if "f" in f:  # FILL BETWEEN, e.g. "k,fABC" black, fill this and other "fABC"
             kw[
                 "fill"
-            ] = f  # .replace("f","")			# (why not pass indices? this allows safe re-ordering of dsets)
+            ] = f  # .replace("f","")            # (why not pass indices? this allows safe re-ordering of dsets)
             kw["linewidth"] = 0
             kw["alpha"] = 0.2
         elif f in standardOptions["markers"]:  # MARKER, NOT LINESTYLE, e.g. "k.", dot
@@ -603,6 +612,23 @@ def saveCSV(xs, ys, ye, xlabel, ylabel, labels, filename):
     )  # include datalabels and x,y labels
     np.savetxt(filename, tosave, header=header, delimiter=",", fmt="%s")
 
+def readCSV(filename):
+    lines=open(filename).readlines()
+    labels=lines[0][2:].split(",")[::3]
+    xlabel,ylabel=lines[1][2:].split(",")[:2]
+    xs,ys,ye=[],[],[]
+    for i in range(len(labels)):
+        xs.append([]) ; ys.append([]) ; ye.append([])
+        for l in lines[2:]:
+            x,y,e=l.split(",")[i*3:i*3+3]
+            if len(x)==0:
+                break
+            xs[-1].append(float(x)) ; ys[-1].append(float(y))
+            if len(e.strip())>0: # .strip handles potential trailing '\n'
+                ye[-1].append(float(e))
+            else:
+                ye[-1].append(0)
+    return xs,ys,ye,xlabel,ylabel,labels
 
 # WHY ARE WE CODING UP OUR OWN VERSION OF GAUSSIAN BLUR? (instead of using scipy.ndimage.gaussian_filter1d etc)?
 # I like being able to use the same gaussian function (including gaussian definition of beam radius) used for our thermal experiments (see TDTR_fitting.py and FD3D.py)
