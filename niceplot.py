@@ -328,10 +328,10 @@ def plot( xs, ys, xe="", ye="", markers="", labels="", filename="", **kwargs ):
         minorticks=kwargs.get("minorticks",True)
         if minorticks:
             ax.minorticks_on()
-        if kwargs.get("xscale") != "log":
-            ax.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(nbins=5))
-        if kwargs.get("yscale") != "log":
-            ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(nbins=5))
+        #if kwargs.get("xscale") != "log":
+        #    ax.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(nbins=5))
+        #if kwargs.get("yscale") != "log":
+        #    ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(nbins=5))
 
         if "nxticks" in kwargs.keys():
             ax.xaxis.set_major_locator(
