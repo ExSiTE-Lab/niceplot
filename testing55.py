@@ -2,12 +2,30 @@ import numpy as np
 from nicecontour import *
 
 xs=np.linspace(-10,10,100)
-ys=np.linspace(-10,10,100)
+ys=np.linspace(-10,10,99)
 zs=xs[None,:]**2-10*np.sin(ys[:,None])
 
 #radii=np.sqrt(xs[:,None]**2+ys[None,:]**2)
 #Z=[ np.sin(xs[None,:])/2*np.ones(len(ys))[:,None] , np.cos(ys[:,None])/2*np.ones(len(xs))[None,:] , np.exp(-2*(radii)**2/5**2) ]
 #contour(ZNChannel(Z),xs,ys,heatOrContour="pix",title="transparent 3 channel")
+
+Z=np.load("Z_testing.npy") ; x=np.load("x_testing.npy") ; y=np.load("y_testing.npy")
+contour(Z.T,x,y,heatOrContour="pix")
+rZ,ky,kx=fft2(Z,y,x)
+rrZ,y2,x2=fft2(rZ,ky,kx,inverse=True)
+contour(np.absolute(rrZ).T,x2,y2,heatOrContour="pix")
+
+
+
+z=np.zeros((len(ys),len(xs))) ; spacing=2
+for i in range(-11,12):
+	for j in range(-11,12):
+		r=np.sqrt(i**2+j**2)
+		z+=np.exp(-((xs[None,:]-i*spacing)**2+(ys[:,None]-j*spacing)**2)/.25**2) * np.exp(-r**2/5**2)
+contour(z,xs,ys,xlabel="x ($\\AA$)",ylabel="y ($\\AA$)",title="spacing = "+str(spacing)+" $\\AA$")
+iz,kx,ky=fft2(z,xs,ys,maxk=1)
+contour(np.absolute(iz),kx,ky,xlabel="kx ($\\AA$^-1)",ylabel="ky ($\\AA$^-1)",title="real space spacing = "+str(spacing)+" $\\AA$")
+
 
 x=xs[None,:]*np.ones(100)[:,None] ; y=ys[:,None]*np.ones(100)[None,:]
 z=colorwheel(x,y)

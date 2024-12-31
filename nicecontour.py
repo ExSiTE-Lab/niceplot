@@ -148,15 +148,29 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 	if heatOrContour in ["pix"]: # shows unsmoothed raw data as pixels. creates substantially smaller svg files too! 
 		print(np.shape(zvals))
 		aspect=kwargs.get("aspect","auto")
-		if yvals[0]<yvals[1]:		# BEWARE: imshow displays with origin in upper-left. and imshow takes extent, not the actual
-			zvals=zvals[::-1,:]	# col-by-col and row-by-row values. So if you have ascending yvals or descending xvals, heat or 
-		if xvals[0]>xvals[1]:		# contour modes would be correct, but the pix map would be flipped. so we need to manually
-			zvals=zvals[:,::-1]	# detect and flip zvals as appropriate
+		#if yvals[0]<yvals[1]:		# BEWARE: imshow displays with origin in upper-left. and imshow takes extent, not the actual
+		#	zvals=zvals[::-1,:]	# col-by-col and row-by-row values. So if you have ascending yvals or descending xvals, heat or 
+		#if xvals[0]>xvals[1]:		# contour modes would be correct, but the pix map would be flipped. so we need to manually
+		#	zvals=zvals[:,::-1]	# detect and flip zvals as appropriate DOING IT BASED ON SINGLE PIXEL PAIRS IS BAD THOUGH
 		zvals[zvals<LB]=np.nan ; zvals[zvals>UB]=np.nan
+		# AUTO SORTING OF ROWS AND COLUMNS? 
+		# Suppose the user passed: xvals=[1,2,3,4,5,-5,-4,-3,-2,-1] (common if it's frequencies that came from np.fft.fftfreq!). imshow simply shows the image, but we need to reorder the columns!
+		# calculate ordering of rows/columns
+		x_indices=np.arange(len(xvals)) ; xvals, x_indices = zip(*sorted(zip(xvals, x_indices)))	# x_indices will be: 5,6,7,8,9,0,1,2,3,4
+		# apply indices. previously we did this: (but why?)
+		#for i,ii in enumerate(x_indices):								# i=0, ii=5
+		#	zvals_sorted[:,i]=zvals[:,ii]								# put values in column 5 into column 0
+		#zvals=zvals_sorted
+		zvals=zvals[:,x_indices]
+		y_indices=np.arange(len(yvals)) ; yvals, y_indices = zip(*sorted(zip(yvals, y_indices)))
+		zvals=zvals[y_indices,:]
+		# BEWARE: imshow displays with origin in upper-left. and imshow takes extent, not the actual col-by-col and row-by-row values. We just sorted zvals to have ascending yvals and ascending xvals, so now we need to flip the pix map 
+		zvals=zvals[::-1,:]
 		
 		plt.imshow(zvals,extent=(min(xvals),max(xvals),min(yvals),max(yvals)),cmap=kwargs.get("cmap",defaultcmap),aspect=aspect)
 		#cbar=plt.colorbar(ticks=ticks)
-		addcbar(kwargs)
+		if len(np.shape(zvals))<3:
+			addcbar(kwargs)
 	#if useLast:
 	#	print(CS.collections)
 
@@ -419,3 +433,63 @@ def getCS():
 	return CS
 def setContObjs(a,f):
 	global ax,fig ; ax,fig=a,f
+
+
+# Why? np.fft.fft2 assumes index 0 means x=0! not always true, so here's a function which handles all the rolling/etc for you. if x₀ is messed up, the phase will be incorrect (even if the magnitude is correct). also, np.fft.fftfreq returns frequencies "out of order" (positives first) so we apply shift to that too. 
+def fft2(Zs,xs,ys,maxk=np.inf,inverse=False): # expect Zs to have y,x indexing (just like contour function above). which means for non-2D, x is -1, y is -2 indices
+	i=np.argmin(np.absolute(xs)) ; j=np.argmin(np.absolute(ys))
+	Zs=np.roll(np.roll(Zs,-i,axis=-1),-j,axis=-2)			# np.fft.fft2 assumes index 0 means x=0! so we must roll
+	#contour(Zs,np.arange(len(xs)),np.arange(len(ys)))
+	fft=np.fft.fft2(Zs)						
+	dx=xs[1]-xs[0] ; dy=ys[1]-ys[0]					# ℱ(ξ) = ∫ f(x) exp(-i2πξx) dx....
+	fft*=dx*dy							# but numpy does not integrate! it sums! 
+	kxs=np.fft.fftfreq(len(xs),xs[1]-xs[0])
+	kys=np.fft.fftfreq(len(ys),ys[1]-ys[0])
+	i=len(kxs)//2 ; j=len(kys)//2
+	fft=np.roll(np.roll(fft,i,axis=-1),j,axis=-2)			# kx and ky include negative frequencies, so we must unroll! 
+	kxs=np.roll(kxs,i) ; kys=np.roll(kys,j)
+	#from niceplot import plot
+	#plot([np.arange(len(kxs)),np.arange(len(kys))],[kxs,kys])
+	ix=np.arange(len(kxs)) ; iy=np.arange(len(kys))			# I generally prefer masks as [0,0,0,0,1,1,1,1,1,1,0,0,0]
+	ix=ix[kxs>=-maxk]  ; kxs=kxs[kxs>=-maxk]			# for the elements i want to keep, then kept=original[mask==1]
+	ix=ix[kxs<=maxk]  ; kxs=kxs[kxs<=maxk]				# but here, we don't want to make assumptions on the shape.
+	iy=iy[kys>=-maxk]  ; kys=kys[kys>=-maxk]			# if Zs was *always* ny,nx, we could do it, but abEELS often
+	iy=iy[kys<=maxk]  ; kys=kys[kys<=maxk]				# has nLayers,nPts,ny,nx and so on. instead, use np.take
+	fft=np.take(fft,ix,axis=-1)					# which accepts a list of indices and an axis
+	fft=np.take(fft,iy,axis=-2)
+
+	# WHY CAN WE USE AN FFT TO CALCULATE AN INVERSE FFT??
+	# ℱ(ξ) = ∫ f(x) exp(-i2πξx) dx : https://en.wikipedia.org/wiki/Fourier_transform
+	# ℱ⁻¹[g(x)] := ∫ exp(2πixξ) g(ξ) dξ : https://en.wikipedia.org/wiki/Fourier_inversion_theorem
+	# it's the same expression, but with a negative sign! apply the -x either before or after
+	if inverse:							
+		kxs*=-1 ; kys*=-1					# these are now x and y (user passed kx,ky), so apply negative
+		fft=fft[::-1,::-1] ; kxs=kxs[::-1] ; kys=kys[::-1]	# x,y now descending, so flip all axes
+		# (if we want x to start at zero, we can roll. we assume f(x) is periodic anyway though, so it doesn't really matter)
+		i=np.argmin(np.absolute(kxs)) ; j=np.argmin(np.absolute(kys))
+		fft=np.roll(np.roll(fft,-i,axis=-1),-j,axis=-2)
+		kxs=np.roll(kxs,-i) ; kys=np.roll(kys,-j)
+		# and rolling alone isn't enough. values below 0 must be shifted by length (assumes periodic cell)
+		lx=(kxs[1]-kxs[0])*len(kxs) ; ly=(kys[1]-kys[0])*len(kys)
+		kxs[kxs<0]+=lx ; kys[kys<0]+=ly
+	return fft,kxs,kys
+
+# OLD VERSION, RESTORED FROM U Virginia/Research/Various Code/rivannaProcessing/W_Ansyscompare13/Various Code/niceplot/nicecontour.py
+# numpy FFT assumes index 0 is t=0 or x=0. if that's not the case, your phase will be wrong! here, you pass Z,xs,ys (Z has y,x index ordering just like contour), we roll as appropriate, and then FFT. we return reciprocal space kx,ky too. 
+#def fft2(zs,xs,ys,maxk=np.inf):
+#	i=np.argmin(np.absolute(xs)) ; 	j=np.argmin(np.absolute(ys))
+#	zs=np.roll(np.roll(zs,-j,axis=-2),-i,axis=-1)
+#	kx=np.fft.fftfreq(len(xs),xs[1]-xs[0]) ; ky=np.fft.fftfreq(len(ys),ys[1]-ys[0])
+#	f=np.fft.fft2(zs)
+#	if maxk<np.amax(kx):
+#		ix=np.arange(len(kx)) ; ix[kx<-maxk]=-1 ; ix[kx>maxk]=-1 ; ix=ix[ix>=0]
+#		iy=np.arange(len(ky)) ; iy[ky<-maxk]=-1 ; iy[ky>maxk]=-1 ; iy=iy[iy>=0]
+#		kx=kx[ix] ; ky=ky[iy] ; f=np.take(f,ix,axis=-1) ; f=np.take(f,iy,axis=-2)
+#	return f,kx,ky
+
+
+
+
+
+
+
