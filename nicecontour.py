@@ -3,12 +3,12 @@ import matplotlib.pyplot as plt #https://matplotlib.org/3.1.0/api/_as_gen/matplo
 import matplotlib.tri as tri
 import matplotlib.cm
 import numpy as np
-from niceplot import processText
+from niceplot import processText,handleMarkers
 
 defaultcmap=matplotlib.cm.inferno
 params={'font':{ 'family':'arial' , 'weight':'regular' , 'size':16 },
 	'axes':{ 'titlesize':16 , 'autolimit_mode':'round_numbers' },
-	'figure':{ 'figsize':(8,6) , 'dpi':192 }}
+	'figure':{ 'figsize':(8,6)}}# , 'dpi':192 }}
 
 def setContRC(key,para):
 	matplotlib.rc(key, **para)
@@ -19,10 +19,11 @@ ZXY=[]
 # zvals should be an NxM matrix, ordered [j,i], xvals should be length M [j], yvals is length N [i], following the convention of numpy (row index is first) or PIL (y index of pixel is first, equivalent to numpy). you should pass Zs.T if your Zs matrix is ordered x,y instead of y,x 
 def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,extras=[],**kwargs):
 
-	global fig,ax,CS,cbar,ticks,UB,LB
+	global fig,ax,CS,cbar,ticks,UB,LB,im
 
 	# 1D DATASET PASSED, USE TRIANGULATION INTERPOLATION
 	if isinstance(zvals[0],int) or isinstance(zvals[0],float):
+		print("triangulating")
 		# Create grid values first.
 		xi = np.linspace(min(xvals), max(xvals), 1000)
 		yi = np.linspace(min(yvals), max(yvals), 1000)
@@ -32,11 +33,20 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 		Xi, Yi = np.meshgrid(xi, yi)
 		zi = interpolator(Xi, Yi)
 		#plt.tricontourf(xvals,yvals,zvals) ; plt.show()
-		xvals=Xi ; yvals=Yi ; zvals=zi
+		xvals=Xi[0,:] ; yvals=Yi[:,0] ; zvals=zi
+		if kwargs.get("returnTriangulated",False):
+			print("return!")
+			return zvals,xvals,yvals
+		#print(xvals)
 	else: 
 		lens=[ len(z) for z in zvals ]
+		if isinstance(zvals,np.ndarray):
+			zvals=np.zeros(zvals.shape)+zvals # "deep copy" so pix nanning doesn't actually edit the original matrix!
+		else: # might be ragged
+			zvals = [ np.zeros(np.shape(z))+z for z in zvals ]
 		# 2D RAGGED DATASET, USE 1D INTERPOLATION TO GRIDIFY
 		if len(set(lens))!=1 or np.shape(zvals)==np.shape(xvals):
+			print("handle ragged")
 			from scipy.interpolate import interp1d
 			Zs=[]
 			minx=max([ min(xs) for xs in xvals ])
@@ -46,19 +56,17 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 				f=interp1d(x,z)
 				Zs.append(f(xs))
 			zvals=np.asarray(Zs) ; xvals=xs
-
-
+	#print(np.nanmin(zvals),np.nanmax(zvals))
 	if np.amin(zvals)==np.amax(zvals):
 		print("nicecontour: bad z bounds. exiting")
 		print(np.amin(zvals),np.amax(zvals))
 		return
+
 	# if we're saving files, use the "Agg" backend. (and save off whatever the current backend is, and restore it after we save it, to prevent messing up the user's python environment). if we're showing, just default to whatever the user's default is
 	#print(xvals,yvals,len(xvals),len(yvals),np.shape(zvals))
 	backend=matplotlib.get_backend()
 	if len(filename)!=0:# and filename!="PLOTOBJ":
 		matplotlib.use("Agg") # https://stackoverflow.com/questions/31156578/matplotlib-doesnt-release-memory-after-savefig-and-close
-
-
 
 	#if not useLast: # TODO this was commented out before. idk why??? (we need it now to allow surface plots to be overlaid)
 	# ah. ALWAYS create new fig,ax, but always populate it with the full list (which goes into ZXY
@@ -77,17 +85,25 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 	else:
 		ZXY.append(xyz)
 	
-
 	#if len(filename)==0:
 	#	# if macos error, try: "export MPLBACKEND=TKAgg" https://stackoverflow.com/questions/55811545/importerror-cannot-load-backend-tkagg-which-requires-the-tk-interactive-fra
 	#	matplotlib.use("TkAgg") # https://stackoverflow.com/questions/56656777/userwarning-matplotlib-is-currently-using-agg-which-is-a-non-gui-backend-so
 	#else:
 	#	matplotlib.use("Agg") # https://stackoverflow.com/questions/31156578/matplotlib-doesnt-release-memory-after-savefig-and-close
-	LB,UB=np.nanmin(zvals),np.nanmax(zvals)
+	LB,UB=np.nanmin(zvals),np.nanmax(zvals) #; print(LB,UB)
 	if "xlim" in kwargs.keys() or "ylim" in kwargs.keys():
 		mask=np.ones(np.shape(zvals))
 		xlim=kwargs.get("xlim",[min(xvals),max(xvals)])
 		ylim=kwargs.get("ylim",[min(yvals),max(yvals)])
+		if xlim[0] is None:
+			xlim[0]=min(xvals)
+		if xlim[1] is None:
+			xlim[1]=max(xvals)
+		if ylim[0] is None:
+			ylim[0]=min(yvals)
+		if ylim[1] is None:
+			ylim[1]=max(yvals)
+
 		mask[:,xvals<xlim[0]]=0 ; mask[:,xvals>xlim[1]]=0
 		mask[yvals<ylim[0],:]=0 ; mask[yvals>ylim[1],:]=0
 		cropped=zvals[mask==1]
@@ -95,19 +111,21 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 
 	if "zlim" in kwargs.keys():
 		zlim=kwargs["zlim"] ; LB={True:LB,False:zlim[0]}[zlim[0] is None] ; UB={True:UB,False:zlim[1]}[zlim[1] is None]
+	#print("zlim",zlim)
 	nticks=kwargs.get("nticks",10)
 	#print(LB,UB)
 	ticks=kwargs.get("zticks",np.linspace(LB,UB,nticks))
-	
+	#print("LB,UB",LB,UB)
 	# for heatmaps, you can use tricontourf, but that won't work for contours. need to follow https://matplotlib.org/stable/gallery/images_contours_and_fields/irregulardatagrid.html
 
+	aspect=kwargs.get("aspect","auto")
 
-	if heatOrContour in ["heat","both"]:
+	if "heat" in heatOrContour:
 		CS=plt.contourf(xvals,yvals,zvals,levels=np.linspace(LB,UB,500),cmap=kwargs.get("cmap",defaultcmap))
 		#print(np.amin(zvals),np.amax(zvals))
 		#cbar=plt.colorbar(ticks=ticks)
-		for c in CS.collections:
-			c.set_edgecolor("face")
+		#for c in CS.collections:
+		#	c.set_edgecolor("face")
 		#	c.set_rasterized(True)
 		#nDecimals=max(0,int(1-np.floor(np.log(UB-LB)/np.log(10)))) # 0.35-0 --> -0.4559319556497244 --> -1 --> could be represented at 3.5e-1. if it was 35, we'd want 0 decimals. if it was 3.5 we'd want 1 decimal. -1 we want 2. 350, we still want 0 decimals
 		#print(nDecimals)
@@ -119,7 +137,7 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 		addcbar(kwargs)
 	# TODO should contours have cbars? no need, if inline labels are used...
 	# TODO beware: useLast=True -> no plt.clf() -> if heatmap is used, duplicative cbars will result. this might be okay though? because overlapping a heatmap seems like nonsense?
-	if heatOrContour in ["contour","both"]:
+	if "contour" in heatOrContour:
 		levels=kwargs.get("levels",np.linspace(LB,UB,20))
 		contourKwargs={"levels":levels,"linestyles":kwargs.get("linestyle","-"),"linewidths":kwargs.get("linewidth",1)}
 		color=kwargs.get("linecolor","black")
@@ -145,14 +163,13 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 		surf = ax.plot_surface(x,y,zvals, linewidth=1, antialiased=False,cmap=kwargs.get("cmap",defaultcmap),alpha=.1)
 		ax.contour3D(x,y,zvals,levels=[.025])
 		#plt.show()
-	if heatOrContour in ["pix"]: # shows unsmoothed raw data as pixels. creates substantially smaller svg files too! 
-		print(np.shape(zvals))
+	if "pix" in heatOrContour: # shows unsmoothed raw data as pixels. creates substantially smaller svg files too! 
 		aspect=kwargs.get("aspect","auto")
 		#if yvals[0]<yvals[1]:		# BEWARE: imshow displays with origin in upper-left. and imshow takes extent, not the actual
 		#	zvals=zvals[::-1,:]	# col-by-col and row-by-row values. So if you have ascending yvals or descending xvals, heat or 
 		#if xvals[0]>xvals[1]:		# contour modes would be correct, but the pix map would be flipped. so we need to manually
 		#	zvals=zvals[:,::-1]	# detect and flip zvals as appropriate DOING IT BASED ON SINGLE PIXEL PAIRS IS BAD THOUGH
-		zvals[zvals<LB]=np.nan ; zvals[zvals>UB]=np.nan
+		zvals[zvals<LB]=np.nan ; zvals[zvals>UB]=np.nan 	# THIS ISN'T ENOUGH. 
 		# AUTO SORTING OF ROWS AND COLUMNS? 
 		# Suppose the user passed: xvals=[1,2,3,4,5,-5,-4,-3,-2,-1] (common if it's frequencies that came from np.fft.fftfreq!). imshow simply shows the image, but we need to reorder the columns!
 		# calculate ordering of rows/columns
@@ -167,10 +184,10 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 		# BEWARE: imshow displays with origin in upper-left. and imshow takes extent, not the actual col-by-col and row-by-row values. We just sorted zvals to have ascending yvals and ascending xvals, so now we need to flip the pix map 
 		zvals=zvals[::-1,:]
 		
-		plt.imshow(zvals,extent=(min(xvals),max(xvals),min(yvals),max(yvals)),cmap=kwargs.get("cmap",defaultcmap),aspect=aspect)
+		im = plt.imshow(zvals,extent=(min(xvals),max(xvals),min(yvals),max(yvals)),cmap=kwargs.get("cmap",defaultcmap),aspect=aspect,vmax=UB,vmin=LB)
 		#cbar=plt.colorbar(ticks=ticks)
-		if len(np.shape(zvals))<3:
-			addcbar(kwargs)
+		#if len(np.shape(zvals))<3:
+		addcbar(kwargs)
 	#if useLast:
 	#	print(CS.collections)
 
@@ -182,8 +199,10 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 	plt.ylim( kwargs.get("ylim",None) )
 	#plt.clim( kwargs.get("zlim",None) )
 	if "aspect" in kwargs.keys():
+		#print("set aspect",kwargs["aspect"])
 		plt.gca().set_aspect(kwargs["aspect"])
-
+	if "figsize" in kwargs.keys():				# most are okay receiving None, except for set_size_inches
+		fig.set_size_inches( kwargs.get("figsize") )
 	if "overplot" in kwargs.keys(): # it's possible to pass a list of dicts of xs,ys,markers, to be plotted over top of the contour/heatmap
 		for dataset in kwargs["overplot"]:
 			#print("overplotting",dataset)
@@ -218,16 +237,52 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 	#return CS
 
 def addcbar(kwargs):
+	if kwargs.get("nocbar",False):
+		return
+
 	global cbar,ticks
-	cbar=plt.colorbar(ticks=ticks)
-	nDecimals=max(0,int(1-np.floor(np.log(UB-LB)/np.log(10)))) # 0.35-0 --> -0.4559319556497244 --> -1 --> could be represented at 3.5e-1. if it was 35, we'd want 0 decimals. if it was 3.5 we'd want 1 decimal. -1 we want 2. 350, we still want 0 decimals
+	#cbar=plt.colorbar(ticks=ticks)
+	ckwargs={"ticks":ticks, "extendrect":True }
+	if "extend" in kwargs.keys():
+		ckwargs["extend"] = kwargs["extend"]
+	if "cbar_cmap" in kwargs.keys():
+		im.set_cmap(kwargs["cbar_cmap"])
+		#ckwargs["mappable"]=matplotlib.cm.ScalarMappable(norm=im.norm,ax=ax,cmap=kwargs["cbar_cmap"])
+	cbar=plt.colorbar(**ckwargs)
+	lb,ub = kwargs.get("cbar_range",[LB,UB])
+	nDecimals=max(0,int(1-np.floor(np.log(ub-lb)/np.log(10)))) # 0.35-0 --> -0.4559319556497244 --> -1 --> could be represented at 3.5e-1. if it was 35, we'd want 0 decimals. if it was 3.5 we'd want 1 decimal. -1 we want 2. 350, we still want 0 decimals
 	#print(nDecimals)
 	#nDecimals=max(nDecimals,0) # https://stackoverflow.com/questions/19986662/rounding-a-number-in-python-but-keeping-ending-zeros
 	ticks=cbar.get_ticks()
+	if "cbar_range" in kwargs.keys():
+		ticks = np.linspace(lb,ub,len(ticks))
 	ticks=[ format(v,'.'+str(nDecimals)+'f') for v in ticks]
 	cbar.ax.set_yticklabels(ticks)
 	cbar.ax.set_title(kwargs.get("zlabel","ZTITLE"))
 
+def plotxy(xs,ys,marker=None):
+	if marker is not None:
+		kw = handleMarkers(marker)
+	def extra(plt):
+		global fig,CS,cbar ; ax=plt.gca()
+		ax.plot(xs,ys,**kw)
+	return extra
+
+def annotationsContour(xs,ys,text,dxs="",dys="",arrowprops="",points=False,**kwargs): # canned "extra"
+	def extra(plt):
+		global fig,CS,cbar ; ax=plt.gca()
+		for n,(x,y,t) in enumerate(zip(xs,ys,text)):
+			dx=0 ; dy=0 ; ap=None
+			if n<len(dxs):
+				dx=dxs[n]
+			if n<len(dys):
+				dy=dys[n]
+			if n<len(arrowprops):
+				ap=arrowprops[n] # e.g. {"facecolor":"black"}
+			ax.annotate(t,xy=(x,y),xytext=(x+dx,y+dy),arrowprops=ap,**kwargs)
+		if points:
+			ax.plot(xs,ys,marker='o',linestyle='',**kwargs)
+	return extra
 
 def invertContourColors(plt):
 	global fig,CS,cbar ; ax=plt.gca()		# where niceplot's invertColors is passed global fix,ax objects, we must retreive ax via plt.gca
@@ -264,6 +319,22 @@ def fillHoles(Zs):
 		if goodNeighbors>=s*8: # outer border
 			Zs[y,x]=np.nanmean(Zs[y-s:y+s+1,x-s:x+s+1])
 		#Zs[y,x]=0
+
+def tileQuadrant(Zs,xs,ys):
+	nx=len(xs) ; ny=len(ys)
+	# new area is 4x the size, don't duplicate center line?
+	Znew=np.zeros((ny*2-1,nx*2-1)) ; xnew=np.zeros(nx*2-1) ; ynew=np.zeros(ny*2-1)
+	# 1st quadrant: flip data for first half
+	xnew[:nx]=-1*xs[::-1] ; ynew[:ny]=-1*ys[::-1]
+	Znew[:ny,:nx]=Zs[::-1,::-1]
+	# 3rd quadrant: don't flip data for second half
+	xnew[nx-1:]=xs[:] ; ynew[ny-1:]=ys[:]
+	Znew[ny-1:,nx-1:]=Zs[:,:]
+	# 2nd and 4th quadrants are combinations of flipped/unflipped x/y
+	Znew[:ny,nx-1:]=Zs[::-1,:]
+	Znew[ny-1:,:nx]=Zs[:,::-1]
+	return Znew,xnew,ynew
+
 
 def untiltZs(Zs,xs,ys,twist=True):
 	print(np.shape(Zs),np.shape(xs),np.shape(ys))
@@ -312,7 +383,7 @@ def interp(Zs,x,y,nx,ny=0,method='cubic'):
 
 # NAH, THIS SUCKS. Reds/Blues/Greens go from white to black through the given color. that's not what we really want. 
 def ZNChannel(Z): # pass a 3 x ny x nx matrix. we'll return a RGB object (ny nx 4) where each layer from the original is mapped to a color
-	nl,nx,ny=np.shape(Z)
+	nl,ny,nx=np.shape(Z)
 	Znew=np.zeros((ny,nx,4)) # colormap object: pix-y, pix-x, [R,G,B,A]
 	for l,cm in zip(range(nl),[matplotlib.cm.Reds,matplotlib.cm.Blues,matplotlib.cm.Greens,matplotlib.cm.Oranges,matplotlib.cm.Purples]):
 		layer=cm(Z[l]) ; layer[:,:,3]=alpha(Z[l])[:,:,3]
@@ -337,7 +408,7 @@ alpha=LinearSegmentedColormap.from_list("roy", [ (0,0,0,0), (0,0,0,1) ])
 #arctic_sun = cbkry
 
 def Z3ChannelRGB(Z):
-	nl,nx,ny=np.shape(Z)	
+	nl,ny,nx=np.shape(Z)
 	Znew=np.zeros((ny,nx,4)) #; red=np.asarray([255,0,0]) ; yellow=np.asarray([255,255,0]) ; blue=np.asarray([0,0,255])
 	Z=[ z/np.amax(z) for z in Z ] ; sumZ=np.sum(Z,axis=0)
 	prox_red=Z[0]/sumZ
@@ -381,11 +452,12 @@ def colorwheel(xs,ys): # pass a 2D matrix of xs and ys between -1 and 1, we'll r
 	#print(Znew)
 	return Z
 
-
-def Z3Channel(Z):
+# Convert a 3,ny,nx matrix into R,Y,B color channels, with correct mixing (R+Y=O, Y+B=G,R+B=V)
+def Z3Channel(Z,alphalims=[0,1]):
 	nl,nx,ny=np.shape(Z)	
 	#Znew=np.zeros((ny,nx,4)) #; red=np.asarray([255,0,0]) ; yellow=np.asarray([255,255,0]) ; blue=np.asarray([0,0,255])
-	Z=[ z/np.amax(z) for z in Z ]
+	maxs=np.amax(Z,axis=(1,2)) ; maxs[maxs==0]=1
+	Z=[ z/m for z,m in zip(Z,maxs) ]
 	xs=[ z*np.cos(t) for z,t in zip(Z,[0,2*np.pi/3,4*np.pi/3])]
 	COMx=np.sum(xs,axis=0)#/np.sum(xs,axis=0)
 	ys=[ z*np.sin(t) for z,t in zip(Z,[0,2*np.pi/3,4*np.pi/3])]
@@ -405,14 +477,20 @@ def Z3Channel(Z):
 	#print("colors",colors)
 	#Znew[:,:,:3]+=colors[:,:,:3]
 	Znew=colorwheel(COMx,COMy)
-	zmax=np.maximum(Z[0],Z[1]) ; zmax=np.maximum(zmax,Z[2])
+	zmax=np.maximum(Z[0],Z[1]) ; zmax=np.maximum(zmax,Z[2])		# base alpha on the most intense color channel
+	#print(np.amax(zmax))
+	zmax/=np.amax(zmax)	# 0-N --> 0-1
+	zmax[zmax<alphalims[0]]=alphalims[0]	# 0-1, but want only 0.25-0.75
+	zmax[zmax>alphalims[1]]=alphalims[1]
+	zmax-=np.amin(zmax) ; zmax/=np.amax(zmax)	# rescale 0.25 to 0 and 0.75 to 1
 	alphas=alpha(zmax)
+
 	#zmax=np.sum(Z,axis=0)
 	#alphas=alpha(zmax/np.amax(zmax))
 	print("alphas",np.amax(alphas[:,:,3]),np.amin(alphas[:,:,3]))
 	Znew[:,:,3]=alphas[:,:,3]#*255
 	#Znew[:,:,3]=255
-	print(Znew)
+	#print(Znew)
 	#ij=np.where(Z[0]==np.amax(Z[0]))
 	#print(ij)
 	#i,j=50,0 # RED SWIGGLE LEFT/RIGHT

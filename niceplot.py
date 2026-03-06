@@ -27,52 +27,63 @@ cycle = cycler( color=defCols * len(defMark) ) +\
 # cmap=matplotlib.cm.rainbow
 cmap = matplotlib.cm.plasma
 
-# WHAT GLOBAL TICK, AXIS, FONT SETTINGS DO YOU WANT?
-params = {
-    "xtick": {
-        "direction": "in",
-        "top": True,
-        "bottom": True,
-        "major.pad": 7,
-        "major.top": True,
-        "minor.top": True,
-        "major.bottom": True,
-        "minor.bottom": True,
-        "major.size": 9,
-        "minor.size": 4.8,
-        "minor.width": 1.5,
-        "major.width": 2,
-    },  # (rule #4)
-    "ytick": {
-        "direction": "in",
-        "left": True,
-        "right": True,
-        "major.pad": 7,
-        "major.left": True,
-        "major.size": 9,
-        "minor.size": 4.8,
-        "minor.width": 1.5,
-        "major.width": 2,
-        "minor.left": True,
-        "major.right": True,
-        "minor.right": True,
-    },
-    "font": {"family": "arial", "weight": "regular", "size": 32},  # (rule #5)
-    "axes": {
-        "autolimit_mode": "round_numbers",
-        "prop_cycle": cycle,
-        "titlesize": 32,
-        "linewidth": 2,
-    },  # (rule #6 Titile size should be the same size as the fontsize)
-    #'svg':{'fonttype':'none'}, # ensure fonts in exported svgs are text objects wen you open them with inkscape: https://stackoverflow.com/questions/34387893/output-matplotlib-figure-to-svg-with-text-as-text-not-curves
-    "figure": {"figsize": (12, 9)},
-    "legend": {
-        "edgecolor": "black",
-        "fancybox": False,
-        # "linewidth":
-    },  # fancybox=false removes corner curvature
-    "mathtext": {"default": "regular"},
-}
+if os.path.exists(".config"):
+    import json
+    lines = open(".config").readlines()
+    lines = [ l.split("#")[0].strip() for l in lines ] # allows comments in our json file (unconventional)
+    text = "".join(lines).replace("True","true").replace("False","false")#.replace(" ,",",").replace()
+    print(text) ; print(text[:317],"/317/",text[317:])
+    params = json.loads(text)
+    if "prop_cycle" not in params["axes"].keys():
+        params["axes"]["prop_cycle"]=cycle
+
+else:
+    # WHAT GLOBAL TICK, AXIS, FONT SETTINGS DO YOU WANT?
+    params = {
+        "xtick": {
+            "direction": "in",
+            "top": True,
+            "bottom": True,
+            "major.pad": 7,
+            "major.top": True,
+            "minor.top": True,
+            "major.bottom": True,
+            "minor.bottom": True,
+            "major.size": 9,
+            "minor.size": 4.8,
+            "minor.width": 1.5,
+            "major.width": 2,
+        },  # (rule #4)
+        "ytick": {
+            "direction": "in",
+            "left": True,
+            "right": True,
+            "major.pad": 7,
+            "major.left": True,
+            "major.size": 9,
+            "minor.size": 4.8,
+            "minor.width": 1.5,
+            "major.width": 2,
+            "minor.left": True,
+            "major.right": True,
+            "minor.right": True,
+        },
+        "font": {"family": "arial", "weight": "regular", "size": 32},  # (rule #5)
+        "axes": {
+            "autolimit_mode": "round_numbers",
+            "prop_cycle": cycle,
+            "titlesize": 32,
+            "linewidth": 2,
+        },  # (rule #6 Titile size should be the same size as the fontsize)
+        #'svg':{'fonttype':'none'}, # ensure fonts in exported svgs are text objects wen you open them with inkscape: https://stackoverflow.com/questions/34387893/output-matplotlib-figure-to-svg-with-text-as-text-not-curves
+        "figure": {"figsize": (12, 9)},
+        "legend": {
+            "edgecolor": "black",
+            "fancybox": False,
+            # "linewidth":
+        },  # fancybox=false removes corner curvature
+        "mathtext": {"default": "regular"},
+    }
 
 def setPlotRC(key, para):
     matplotlib.rc(key, **para)
