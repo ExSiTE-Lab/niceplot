@@ -35,7 +35,7 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 		#plt.tricontourf(xvals,yvals,zvals) ; plt.show()
 		xvals=Xi[0,:] ; yvals=Yi[:,0] ; zvals=zi
 		if kwargs.get("returnTriangulated",False):
-			print("return!")
+			#print("return!")
 			return zvals,xvals,yvals
 		#print(xvals)
 	else: 
@@ -140,11 +140,13 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 	if "contour" in heatOrContour:
 		levels=kwargs.get("levels",np.linspace(LB,UB,20))
 		contourKwargs={"levels":levels,"linestyles":kwargs.get("linestyle","-"),"linewidths":kwargs.get("linewidth",1)}
-		color=kwargs.get("linecolor","black")
+		color=kwargs.get("linecolor","black") ; c=color
+		if isinstance(color,list):
+			c=color[0]
 		try:
-			colorOrMap={True:"cmap",False:"colors"}[ color in matplotlib.colormaps.keys() ]
+			colorOrMap={True:"cmap",False:"colors"}[ c in matplotlib.colormaps.keys() ]
 		except:
-			colorOrMap={True:"cmap",False:"colors"}[ color in matplotlib.cm.cmaps_listed.keys() ]
+			colorOrMap={True:"cmap",False:"colors"}[ c in matplotlib.cm.cmaps_listed.keys() ]
 		contourKwargs[colorOrMap]=color
 		#CS=plt.contour(xvals,yvals,zvals, **contourKwargs)
 		for z,x,y in ZXY:
@@ -337,7 +339,7 @@ def tileQuadrant(Zs,xs,ys):
 
 
 def untiltZs(Zs,xs,ys,twist=True):
-	print(np.shape(Zs),np.shape(xs),np.shape(ys))
+	#print(np.shape(Zs),np.shape(xs),np.shape(ys))
 	slopesX=np.mean(np.gradient(Zs,xs[1]-xs[0],axis=1),axis=1) # calculate slope of each row. simple mean of slope between each point
 	slopesY=np.mean(np.gradient(Zs,ys[1]-ys[0],axis=0),axis=0) # calculate slope of each column
 	xs=np.asarray(xs) ; ys=np.asarray(ys)
@@ -417,10 +419,10 @@ def Z3ChannelRGB(Z):
 	Znew[:,:,0]+=prox_red[:,:]*255
 	Znew[:,:,1]+=prox_yel[:,:]*255
 	Znew[:,:,2]+=prox_blu[:,:]*255
-	print(np.amax(Znew))
+	#print(np.amax(Znew))
 	#Znew/=3
 	a=alpha(sumZ)
-	print(np.amax(a))
+	#print(np.amax(a))
 	Znew[:,:,3]=a[:,:,3]
 	#Znew[:,:,3]=255
 	return Znew
@@ -487,7 +489,7 @@ def Z3Channel(Z,alphalims=[0,1]):
 
 	#zmax=np.sum(Z,axis=0)
 	#alphas=alpha(zmax/np.amax(zmax))
-	print("alphas",np.amax(alphas[:,:,3]),np.amin(alphas[:,:,3]))
+	#print("alphas",np.amax(alphas[:,:,3]),np.amin(alphas[:,:,3]))
 	Znew[:,:,3]=alphas[:,:,3]#*255
 	#Znew[:,:,3]=255
 	#print(Znew)

@@ -214,7 +214,7 @@ def plot( xs, ys, xe="", ye="", markers="", labels="", filename="", **kwargs ):
         y = ys[i]
         ax = axs[0]
         if len(axs) > 1:
-            print(i, multiplot["indices"])
+            #print(i, multiplot["indices"])
             ax = axs[multiplot["indices"][i]]
         # PROCESS MARKERS
         if len(markers) > i:

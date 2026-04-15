@@ -2,9 +2,9 @@ import numpy as np
 from niceplot import *
 import sys
 
-xs=np.linspace(0,10,20)
-ys=xs**2
 
+
+# WHICH TESTS SHOULD WE RUN
 if len(sys.argv)==1:
 	tests=np.arange(100)
 else:
@@ -16,6 +16,10 @@ else:
 		else:
 			tests.append(int(v))
 
+
+
+xs=np.linspace(0,10,20)
+ys=xs**2
 
 if 1 in tests:
 	print("1")
@@ -67,7 +71,7 @@ if 11 in tests:
 if 12 in tests:
 	print("12")
 	Xs,Ys,Ye,XLB,YLB,DLBS=readCSV("testing54.csv")
-	print(Xs,Ys,Ye)
+	#print(Xs,Ys,Ye)
 	plot(Xs,Ys,ye=Ye,markers=['k.','bo','r.'],title="readread CSV",xlabel=XLB,ylabel=YLB,labels=DLBS)
 
 if 13 in tests:
