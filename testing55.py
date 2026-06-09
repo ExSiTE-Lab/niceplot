@@ -193,13 +193,13 @@ if 35 in tests:
 	#; s=2.1 ; p=.25
 	#zs = (s/(xs[None,:]**p+ys[:,None]**p))**6 - (s/(xs[None,:]**p+ys[:,None]**p))**3 ; zs-=np.amin(zs) ; zs+=.1 ; zs = np.log(zs)
 	#contour(zs,xs,ys,heatOrContour="pix,contour",linecolor='w',nticks=100)
-	#x,y = trace_minima(zs,xs,ys)
-	#x=gaussianBlur([np.arange(len(x)),x], 15)[15:-15]
-	#y=gaussianBlur([np.arange(len(y)),y], 15)[15:-15]
+	x,y = trace_minima(zs,xs,ys)
+	x=gaussianBlur([np.arange(len(x)),x], 15)[15:-15]
+	y=gaussianBlur([np.arange(len(y)),y], 15)[15:-15]
 	#x,y = trace_minima(zs,xs,ys,start=(250,0))
 	#print(x,y)
-	#overplot=[{"xs":x,"ys":y,"kind":"line","linestyle":"-","c":"red"},{"xs":x,"ys":y,"kind":"scatter","c":"blue"}]
-	#contour(zs,xs,ys,heatOrContour="pix,contour",overplot=overplot,linecolor='w',nticks=100)
+	overplot=[{"xs":x,"ys":y,"kind":"line","linestyle":"-","c":"red"},{"xs":x,"ys":y,"kind":"scatter","c":"blue"}]
+	contour(zs,xs,ys,heatOrContour="pix,contour",overplot=overplot,linecolor='w',nticks=100)
 
 	x,y=trace_minima_2(zs,xs,ys)
 	overplot=[{"xs":x,"ys":y,"kind":"line","linestyle":"-","c":"red"},{"xs":x,"ys":y,"kind":"scatter","c":"blue"}]
