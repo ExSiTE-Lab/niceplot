@@ -201,5 +201,7 @@ if 35 in tests:
 	#overplot=[{"xs":x,"ys":y,"kind":"line","linestyle":"-","c":"red"},{"xs":x,"ys":y,"kind":"scatter","c":"blue"}]
 	#contour(zs,xs,ys,heatOrContour="pix,contour",overplot=overplot,linecolor='w',nticks=100)
 
-	trace_minima2(zs,xs,ys)
+	x,y=trace_minima_2(zs,xs,ys)
+	overplot=[{"xs":x,"ys":y,"kind":"line","linestyle":"-","c":"red"},{"xs":x,"ys":y,"kind":"scatter","c":"blue"}]
+	contour(zs,xs,ys,heatOrContour="pix,contour",overplot=overplot,linecolor='w',nticks=100)
 

@@ -609,7 +609,47 @@ def trace_minima(zvals,xvals,yvals,start=(None,None)):
 	xs=np.asarray([ xvals[i] for i in Xs ]) ; ys=np.asarray([ yvals[j] for j in Ys ])
 	return xs,ys
 
-def trace_minima2(zvals,xvals,yvals):
-	levels=np.linspace(np.amin(zvals),np.amin(zvals),100)
-	CS=plt.contour(x,y,z, levels=levels)
-	print(Cs)
+def trace_minima_2(zvals,xvals,yvals):
+	levels=np.linspace(np.amin(zvals),np.amax(zvals),200)
+	CS=plt.contour(xvals,yvals,zvals, levels=levels)
+	segments = CS.allsegs
+	xs = [] ; ys = [] ; j = None
+	for n in range(1,len(segments)-1):
+		level1 = segments[n]
+		level2= segments[n+1] # shape s,l,2: this level may be made up of multiple segments, each is a list of x and y
+		if len(level1)==0 or len(level2)==0:
+			continue
+		x1 = np.asarray( sum([ list(l[:,0]) for l in level1 ],[]) )
+		y1 = np.asarray( sum([ list(l[:,1]) for l in level1 ],[]) )
+		x2 = np.asarray( sum([ list(l[:,0]) for l in level2 ],[]) )
+		y2 = np.asarray( sum([ list(l[:,1]) for l in level2 ],[]) )
+		#  j.''-.			"slowest ascent" is largest spacing of contours
+		# /       '-.		so start on the inner contour. find the point
+		#|    i.-'-. '.		who's nearest next-contour neighbor is farthest
+		#|   /     '.  '.	also "look back" from the next contour to make
+		# \  |       \		sure we're at the farthest point there too.
+		#  \ \
+		#   \ \
+		# from each point on 1 to each point on 2
+		distances = np.sqrt( (x1[:,None]-x2[None,:])**2+(y1[:,None]-y2[None,:])**2 )
+		# each point on 1's minimum distance to next curve
+		dist_ij = np.amin(distances,axis=1)
+		# start with the point furthest from any neighbors. for subsequent curves, we'll use the point we found last time
+		if j is None:
+			i = np.argmax(dist_ij)
+		else:
+			i = j
+		xs.append(x1[i]) ; ys.append(y1[i])
+		# each point on 2's minimum distance to curve 1
+		dist_ji = np.amin(distances,axis=0)
+		while True:
+			# Sanity check. curve 2's farthest point from curve 1 might be on the other side of the ellipse!
+			# real distance i to j, vs what our "best candidate j" think's it's neighbor distance is?
+			j = np.argmax(dist_ji)
+			if dist_ji[j]==0:
+				break
+			if distances[i,j] > dist_ji[j]*2:
+				dist_ji[j]=0
+			else:
+				break
+	return xs,ys
