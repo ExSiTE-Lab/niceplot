@@ -670,7 +670,8 @@ def gaussianBlur(data, blurWidth):
         # n=len(ys) ; padded=np.zeros(3*n) ; padded[:n]=ys[::-1] ; padded[n:2*n]=ys[:] ; padded[2*n:]=ys[::-1]
         # blurredY=convolve(padded, gauss, mode="same")
         # blurredY=blurredY[n:2*n]
-        blurredY *= np.trapz(ys) / np.trapz(blurredY)
+        #blurredY *= np.trapz(ys) / np.trapz(blurredY) # DON'T USE TRAPZ, OR PLOTS THAT DIP NEGATIVE WILL SCALE INCORRECTLY
+        blurredY *= np.sum(np.absolute(ys)) / np.sum(np.absolute(blurredY))
         return blurredY
     if ND == 3:
         gauss = gauss3D(xs, ys, blurWidth)

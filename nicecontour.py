@@ -138,7 +138,7 @@ def contour(zvals,xvals,yvals,filename='',heatOrContour="heat",useLast=False,ext
 	# TODO should contours have cbars? no need, if inline labels are used...
 	# TODO beware: useLast=True -> no plt.clf() -> if heatmap is used, duplicative cbars will result. this might be okay though? because overlapping a heatmap seems like nonsense?
 	if "contour" in heatOrContour:
-		levels=kwargs.get("levels",np.linspace(LB,UB,20))
+		levels=kwargs.get("levels",np.linspace(LB,UB,2*kwargs.get("nticks",10)))
 		contourKwargs={"levels":levels,"linestyles":kwargs.get("linestyle","-"),"linewidths":kwargs.get("linewidth",1)}
 		color=kwargs.get("linecolor","black") ; c=color
 		if isinstance(color,list):
@@ -567,9 +567,49 @@ def fft2(Zs,xs,ys,maxk=np.inf,inverse=False): # expect Zs to have y,x indexing (
 #		kx=kx[ix] ; ky=ky[iy] ; f=np.take(f,ix,axis=-1) ; f=np.take(f,iy,axis=-2)
 #	return f,kx,ky
 
+# WALK FROM THE LOWEST TWO POINTS ON THE EDGES, DOWNHILL
+def trace_minima(zvals,xvals,yvals,start=(None,None)):
+	exclude = []
+	Xs = [] ; Ys=[]
+	for N in range(2):
+		if start[0]!=None and start[1]!=None:
+			i,j=start ; N=1
+		else:
+			i_top  = np.argmin(zvals[0,:])    ; z_top    = zvals[0,i_top]     if "i_top"    not in exclude else np.amax(zvals)
+			i_bottom = np.argmin(zvals[-1,:]) ; z_bottom = zvals[-1,i_bottom] if "i_bottom" not in exclude else np.amax(zvals)
+			j_left = np.argmin(zvals[:,0])    ; z_left   = zvals[j_left,0]    if "j_left" not in exclude else np.amax(zvals)
+			j_right  = np.argmin(zvals[:,-1]) ; z_right  = zvals[j_right,-1]  if "j_right" not in exclude else np.amax(zvals)
+			minz = min(z_top,z_bottom,z_left,z_right)
+			if z_top == minz:
+				i=i_top ; j=0 ; exclude.append("i_top")
+			if z_bottom == minz:
+				i=i_bottom ; j=len(yvals)-1 ; exclude.append("i_bottom")
+			if z_left == minz:
+				i=0 ; j=j_left ; exclude.append("j_left")
+			if z_right == minz:
+				i=len(xvals)-1 ; j=j_right ; exclude.append("j_right")
+		xs=[i] ; ys=[j] ; search = 1 ; print(i,j)
+		while True:
+			i1 = max(0,i-search) ; i2 = min(i+search+1,len(xvals))
+			j1 = max(0,j-search) ; j2 = min(j+search+1,len(yvals))
+			dj,di = np.where(zvals[j1:j2,i1:i2]==np.amin(zvals[j1:j2,i1:i2]))
+			j_new=j1+dj[0] ; i_new = i1+di[0]
+			if i==i_new and j==j_new:
+				search+=1
+			else:
+				search = 1
+				xs.append(i_new) ; ys.append(j_new)
+				i = i_new ; j = j_new
+			if search>5:
+				break
+		if N==0:
+			Xs+=xs ; Ys+=ys
+		else:
+			Xs+=xs[::-1] ; Ys+=ys[::-1]
+	xs=np.asarray([ xvals[i] for i in Xs ]) ; ys=np.asarray([ yvals[j] for j in Ys ])
+	return xs,ys
 
-
-
-
-
-
+def trace_minima2(zvals,xvals,yvals):
+	levels=np.linspace(np.amin(zvals),np.amin(zvals),100)
+	CS=plt.contour(x,y,z, levels=levels)
+	print(Cs)
